@@ -1,0 +1,113 @@
+export type ProductStatus = "active" | "inactive";
+export type LandingPageStatus = "draft" | "published" | "archived";
+
+export interface AffiliateProduct {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  destination_url: string;
+  category: string | null;
+  source_platform: string;
+  status: ProductStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LandingPage {
+  id: string;
+  title: string;
+  slug: string;
+  intro: string | null;
+  content: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  featured_image_url: string | null;
+  disclosure_text: string | null;
+  status: LandingPageStatus;
+  custom_head_script: string | null;
+  custom_body_script: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LandingPageProduct {
+  id: string;
+  landing_page_id: string;
+  product_id: string;
+  sort_order: number;
+  custom_title: string | null;
+  custom_description: string | null;
+  custom_cta: string;
+  created_at: string;
+}
+
+export interface ClickEvent {
+  id: string;
+  product_id: string | null;
+  landing_page_id: string | null;
+  product_slug: string | null;
+  landing_page_slug: string | null;
+  redirect_slug: string | null;
+  destination_url: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  referrer: string | null;
+  user_agent: string | null;
+  ip_hash: string | null;
+  country: string | null;
+  device_type: string | null;
+  browser: string | null;
+  os: string | null;
+  is_duplicate: boolean;
+  is_bot: boolean;
+  created_at: string;
+}
+
+export interface AdSpendReport {
+  id: string;
+  report_date: string;
+  platform: string;
+  campaign_name: string;
+  adset_name: string | null;
+  ad_name: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  spend: number;
+  impressions: number;
+  link_clicks: number;
+  landing_page_views: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteSettings {
+  id: string;
+  site_name: string;
+  site_url: string | null;
+  default_disclosure_text: string;
+  meta_pixel_id: string | null;
+  ga4_measurement_id: string | null;
+  global_head_script: string | null;
+  global_body_script: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiKeyMeta {
+  id: string;
+  name: string;
+  key_prefix: string;
+  scopes: string[];
+  status: "active" | "revoked";
+  last_used_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}

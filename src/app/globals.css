@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 0% -20%, rgba(37, 99, 235, 0.06), transparent 60%),
+    radial-gradient(900px 500px at 110% -10%, rgba(37, 99, 235, 0.04), transparent 60%),
+    #05070d;
+  color: theme("colors.ink");
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Custom scrollbars in surfaces */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #1f2740;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Subtle table row hover */
+.row-hover:hover {
+  background-color: rgba(37, 99, 235, 0.06);
+}
+
+/* Focus ring */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid theme("colors.brand.DEFAULT");
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle .track {
+  position: absolute;
+  inset: 0;
+  background: #243049;
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+.toggle .thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #e7ecf5;
+  transition: transform 0.15s ease;
+}
+.toggle input:checked + .track {
+  background: theme("colors.brand.DEFAULT");
+}
+.toggle input:checked + .track + .thumb {
+  transform: translateX(16px);
+}
