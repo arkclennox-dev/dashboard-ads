@@ -3,6 +3,7 @@ import { PageShell } from "@/components/page-shell";
 import { listProducts } from "@/lib/data/products";
 import { env } from "@/lib/env";
 import { formatDate, formatNumber } from "@/lib/format";
+import { ProductRowActions } from "./product-row-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function AdminProductsPage() {
           </span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="w-full min-w-[920px] text-left text-sm">
             <thead className="text-[11px] uppercase tracking-wider text-muted">
               <tr className="border-y border-border [&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
                 <th>Title</th>
@@ -41,38 +42,64 @@ export default async function AdminProductsPage() {
                 <th>Status</th>
                 <th>Total Clicks</th>
                 <th>Created At</th>
-                <th className="text-right">Redirect</th>
+                <th>Redirect</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((p) => (
-                <tr
-                  key={p.id}
-                  className="row-hover border-b border-border last:border-0 [&>td]:px-3 [&>td]:py-3"
-                >
-                  <td className="font-medium text-ink">{p.title}</td>
-                  <td className="text-muted">{p.slug}</td>
-                  <td className="text-ink-2">{p.source_platform}</td>
-                  <td>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        p.status === "active"
-                          ? "bg-success/10 text-success"
-                          : "bg-muted-2/15 text-muted"
-                      }`}
+              {items.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-3 py-8 text-center text-sm text-muted"
+                  >
+                    No products yet.{" "}
+                    <Link
+                      href="/admin/products/new"
+                      className="text-brand-300 hover:underline"
                     >
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="text-ink-2">{formatNumber(p.total_clicks)}</td>
-                  <td className="text-ink-2">{formatDate(p.created_at)}</td>
-                  <td className="text-right">
-                    <code className="rounded bg-surface px-2 py-1 text-xs text-brand-300">
-                      /go/{p.slug}
-                    </code>
+                      Create the first one
+                    </Link>
+                    .
                   </td>
                 </tr>
-              ))}
+              ) : (
+                items.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="row-hover border-b border-border last:border-0 [&>td]:px-3 [&>td]:py-3"
+                  >
+                    <td className="font-medium text-ink">{p.title}</td>
+                    <td className="text-muted">{p.slug}</td>
+                    <td className="text-ink-2">{p.source_platform}</td>
+                    <td>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          p.status === "active"
+                            ? "bg-success/10 text-success"
+                            : "bg-muted-2/15 text-muted"
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="text-ink-2">{formatNumber(p.total_clicks)}</td>
+                    <td className="text-ink-2">{formatDate(p.created_at)}</td>
+                    <td>
+                      <code className="rounded bg-surface px-2 py-1 text-xs text-brand-300">
+                        /go/{p.slug}
+                      </code>
+                    </td>
+                    <td className="text-right">
+                      <ProductRowActions
+                        id={p.id}
+                        title={p.title}
+                        status={p.status}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
