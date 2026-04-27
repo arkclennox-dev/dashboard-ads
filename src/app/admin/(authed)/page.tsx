@@ -11,6 +11,8 @@ import {
 import { MetricCard } from "@/components/metric-card";
 import { RedirectLinkBuilder } from "@/components/redirect-link-builder";
 import { Topbar } from "@/components/topbar";
+import { listProducts } from "@/lib/data/products";
+import { env } from "@/lib/env";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 import { buildAdSetRows, buildDailySeries, buildOverviewMetrics } from "@/lib/reports";
 
@@ -22,10 +24,11 @@ const dayLabel = (iso: string) => {
 };
 
 export default async function AdminOverviewPage() {
-  const [rows, metrics, series] = await Promise.all([
+  const [rows, metrics, series, productsResult] = await Promise.all([
     buildAdSetRows(),
     buildOverviewMetrics(),
     buildDailySeries(7),
+    listProducts({ page: 1, pageSize: 100 }, env.siteUrl),
   ]);
   const labels = series.map((p) => dayLabel(p.date));
 
@@ -147,7 +150,15 @@ export default async function AdminOverviewPage() {
         </div>
 
         <div className="xl:sticky xl:top-6">
-          <RedirectLinkBuilder />
+          <RedirectLinkBuilder
+            products={productsResult.items.map((p) => ({
+              id: p.id,
+              slug: p.slug,
+              title: p.title,
+              destination_url: p.destination_url,
+            }))}
+            siteUrl={env.siteUrl}
+          />
         </div>
       </div>
     </div>

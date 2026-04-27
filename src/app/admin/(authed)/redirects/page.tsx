@@ -57,7 +57,15 @@ export default async function AdminRedirectsPage() {
           </div>
         </div>
 
-        <RedirectLinkBuilder />
+        <RedirectLinkBuilder
+          products={items.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            destination_url: p.destination_url,
+          }))}
+          siteUrl={env.siteUrl}
+        />
       </div>
     </PageShell>
   );
