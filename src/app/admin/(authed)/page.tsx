@@ -21,10 +21,12 @@ const dayLabel = (iso: string) => {
   return d.toLocaleString("en-US", { month: "short", day: "numeric" });
 };
 
-export default function AdminOverviewPage() {
-  const rows = buildAdSetRows();
-  const metrics = buildOverviewMetrics();
-  const series = buildDailySeries(7);
+export default async function AdminOverviewPage() {
+  const [rows, metrics, series] = await Promise.all([
+    buildAdSetRows(),
+    buildOverviewMetrics(),
+    buildDailySeries(7),
+  ]);
   const labels = series.map((p) => dayLabel(p.date));
 
   return (

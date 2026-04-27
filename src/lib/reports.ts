@@ -1,4 +1,6 @@
+import { isDemoMode } from "./env";
 import { getDemoStore } from "./demo-store";
+import { getSupabaseServiceRole } from "./supabase/server";
 import type { AdSpendReport, ClickEvent, AffiliateProduct } from "./types";
 
 export interface AdSetRow {
@@ -50,30 +52,77 @@ function statusFromProduct(p: AffiliateProduct): AdSetRow["status"] {
   return "Active";
 }
 
-export function buildAdSetRows(): AdSetRow[] {
-  const store = getDemoStore();
+interface ReportSource {
+  products: AffiliateProduct[];
+  clicks: ClickEvent[];
+  adSpend: AdSpendReport[];
+}
+
+async function loadReportSource(): Promise<ReportSource> {
+  if (isDemoMode) {
+    const store = getDemoStore();
+    return {
+      products: store.products,
+      clicks: store.clicks,
+      adSpend: store.adSpend,
+    };
+  }
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) {
+    return { products: [], clicks: [], adSpend: [] };
+  }
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffIso = cutoff.toISOString();
+  const cutoffDate = cutoffIso.slice(0, 10);
+
+  const [productsRes, clicksRes, adSpendRes] = await Promise.all([
+    supabase.from("affiliate_products").select("*"),
+    supabase
+      .from("click_events")
+      .select("*")
+      .gt("created_at", cutoffIso)
+      .order("created_at", { ascending: false })
+      .limit(5000),
+    supabase
+      .from("ad_spend_reports")
+      .select("*")
+      .gte("report_date", cutoffDate)
+      .order("report_date", { ascending: false })
+      .limit(5000),
+  ]);
+
+  return {
+    products: (productsRes.data ?? []) as AffiliateProduct[],
+    clicks: (clicksRes.data ?? []) as ClickEvent[],
+    adSpend: (adSpendRes.data ?? []) as AdSpendReport[],
+  };
+}
+
+export async function buildAdSetRows(): Promise<AdSetRow[]> {
+  const source = await loadReportSource();
   const clicksByProduct = new Map<string, ClickEvent[]>();
-  store.clicks.forEach((c) => {
+  source.clicks.forEach((c) => {
     if (!c.product_id) return;
     const arr = clicksByProduct.get(c.product_id) ?? [];
     arr.push(c);
     clicksByProduct.set(c.product_id, arr);
   });
   const spendByAdsetName = new Map<string, AdSpendReport[]>();
-  store.adSpend.forEach((a) => {
+  source.adSpend.forEach((a) => {
     const key = a.adset_name ?? a.campaign_name;
     const arr = spendByAdsetName.get(key) ?? [];
     arr.push(a);
     spendByAdsetName.set(key, arr);
   });
 
-  return store.products.map((p) => {
+  return source.products.map((p) => {
     const clicksRows = clicksByProduct.get(p.id) ?? [];
     const spendRows = spendByAdsetName.get(p.title) ?? [];
     const clicks = clicksRows.length;
-    const spend = spendRows.reduce((s, r) => s + r.spend, 0);
-    const impressions = spendRows.reduce((s, r) => s + r.impressions, 0);
-    const linkClicks = spendRows.reduce((s, r) => s + r.link_clicks, 0);
+    const spend = spendRows.reduce((s, r) => s + Number(r.spend ?? 0), 0);
+    const impressions = spendRows.reduce((s, r) => s + Number(r.impressions ?? 0), 0);
+    const linkClicks = spendRows.reduce((s, r) => s + Number(r.link_clicks ?? 0), 0);
     const cpc = clicks > 0 ? spend / clicks : 0;
     const ctr = impressions > 0 ? (linkClicks / impressions) * 100 : 0;
     const nonDup = clicksRows.filter((c) => !c.is_duplicate && !c.is_bot).length;
@@ -95,8 +144,7 @@ export function buildAdSetRows(): AdSetRow[] {
   });
 }
 
-export function buildDailySeries(days = 7): DailyPoint[] {
-  const store = getDemoStore();
+function buildDailySeriesFromSource(source: ReportSource, days: number): DailyPoint[] {
   const buckets = new Map<string, { clicks: number; spend: number }>();
   const today = new Date();
   for (let i = days - 1; i >= 0; i--) {
@@ -104,14 +152,14 @@ export function buildDailySeries(days = 7): DailyPoint[] {
     d.setDate(today.getDate() - i);
     buckets.set(d.toISOString().slice(0, 10), { clicks: 0, spend: 0 });
   }
-  store.clicks.forEach((c) => {
+  source.clicks.forEach((c) => {
     const key = dayKey(c.created_at);
     const bucket = buckets.get(key);
     if (bucket) bucket.clicks++;
   });
-  store.adSpend.forEach((a) => {
+  source.adSpend.forEach((a) => {
     const bucket = buckets.get(a.report_date);
-    if (bucket) bucket.spend += a.spend;
+    if (bucket) bucket.spend += Number(a.spend ?? 0);
   });
   return Array.from(buckets.entries()).map(([date, v]) => ({
     date,
@@ -120,8 +168,14 @@ export function buildDailySeries(days = 7): DailyPoint[] {
   }));
 }
 
-export function buildOverviewMetrics(): OverviewMetrics {
-  const series = buildDailySeries(14);
+export async function buildDailySeries(days = 7): Promise<DailyPoint[]> {
+  const source = await loadReportSource();
+  return buildDailySeriesFromSource(source, days);
+}
+
+export async function buildOverviewMetrics(): Promise<OverviewMetrics> {
+  const source = await loadReportSource();
+  const series = buildDailySeriesFromSource(source, 14);
   const recent = series.slice(-7);
   const previous = series.slice(0, 7);
 
@@ -136,21 +190,20 @@ export function buildOverviewMetrics(): OverviewMetrics {
   const cpc = clicks ? spend / clicks : 0;
   const prevCpc = prevClicks ? prevSpend / prevClicks : 0;
 
-  const store = getDemoStore();
-  const totalImpressions = store.adSpend
+  const totalImpressions = source.adSpend
     .filter((a) => recent.some((d) => d.date === a.report_date))
-    .reduce((s, r) => s + r.impressions, 0);
+    .reduce((s, r) => s + Number(r.impressions ?? 0), 0);
   const ctr = totalImpressions ? (clicks / totalImpressions) * 100 : 0;
-  const prevImpressions = store.adSpend
+  const prevImpressions = source.adSpend
     .filter((a) => previous.some((d) => d.date === a.report_date))
-    .reduce((s, r) => s + r.impressions, 0);
+    .reduce((s, r) => s + Number(r.impressions ?? 0), 0);
   const prevCtr = prevImpressions ? (prevClicks / prevImpressions) * 100 : 0;
 
-  const nonDup = store.clicks.filter(
+  const nonDup = source.clicks.filter(
     (c) => !c.is_duplicate && !c.is_bot && recent.some((d) => d.date === c.created_at.slice(0, 10)),
   ).length;
   const conversionRate = clicks ? (nonDup / clicks) * 100 : 0;
-  const prevNonDup = store.clicks.filter(
+  const prevNonDup = source.clicks.filter(
     (c) =>
       !c.is_duplicate &&
       !c.is_bot &&
@@ -175,6 +228,6 @@ export function buildOverviewMetrics(): OverviewMetrics {
     clicksSparkline: recent.map((p) => p.clicks),
     cpcSparkline: recent.map((p) => (p.clicks ? p.spend / p.clicks : 0)),
     ctrSparkline: recent.map((p) => p.clicks * 0.003 + 1.4),
-    conversionRateSparkline: recent.map(() => 2 + Math.random() * 1.6),
+    conversionRateSparkline: recent.map((p) => (p.clicks ? 90 + (p.clicks % 5) : 0)),
   };
 }

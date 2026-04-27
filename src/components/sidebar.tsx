@@ -121,6 +121,12 @@ export function Sidebar() {
           </div>
           <IconChevronDown className="text-muted" />
         </div>
+        <a
+          href="/api/auth/signout"
+          className="mt-3 block w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-center text-xs font-medium text-ink-2 hover:bg-surface-3"
+        >
+          Sign out
+        </a>
       </div>
     </aside>
   );
