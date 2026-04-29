@@ -5,6 +5,7 @@ export interface AffiliateProduct {
   id: string;
   title: string;
   slug: string;
+  short_code: string | null;
   description: string | null;
   image_url: string | null;
   destination_url: string;

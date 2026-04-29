@@ -46,6 +46,7 @@ export function error(
 export const errors = {
   validation: (details: unknown) =>
     error("VALIDATION_ERROR", "Invalid request body", 422, details),
+  badRequest: (message = "Bad request") => error("BAD_REQUEST", message, 400),
   unauthorized: (message = "Authentication required") =>
     error("UNAUTHORIZED", message, 401),
   forbidden: (message = "Insufficient scope") => error("FORBIDDEN", message, 403),

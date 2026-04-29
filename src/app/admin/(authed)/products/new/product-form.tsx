@@ -20,6 +20,7 @@ export function ProductForm() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [shortCode, setShortCode] = useState("");
   const [destinationUrl, setDestinationUrl] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("general");
@@ -44,6 +45,7 @@ export function ProductForm() {
         body: JSON.stringify({
           title,
           slug,
+          short_code: shortCode.trim() || null,
           destination_url: destinationUrl,
           description: description || null,
           category: category || null,
@@ -99,6 +101,22 @@ export function ProductForm() {
           title="lowercase letters, numbers, dashes only"
           required
         />
+      </label>
+      <label className="block">
+        <div className="mb-1.5 text-xs font-medium text-ink-2">
+          Short code <span className="text-muted-2">(optional — leave blank for random)</span>
+        </div>
+        <input
+          className={inputCls}
+          placeholder="e.g. promo1 (used in https://your-site/promo1)"
+          value={shortCode}
+          onChange={(e) => setShortCode(e.target.value)}
+          pattern="[a-zA-Z0-9_-]{2,40}"
+          title="2-40 chars, letters/digits/-/_"
+        />
+        <p className="mt-1 text-[11px] text-muted-2">
+          Reserved paths not allowed: admin, api, go, rekomendasi, disclaimer, privacy-policy, login.
+        </p>
       </label>
       <label className="block">
         <div className="mb-1.5 text-xs font-medium text-ink-2">Destination URL</div>

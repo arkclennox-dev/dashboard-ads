@@ -23,7 +23,9 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
         description: row.custom_description || row.product!.description,
         image_url: row.product!.image_url,
         cta: row.custom_cta,
-        redirect_url: `${base}/go/${row.product!.slug}`,
+        redirect_url: row.product!.short_code
+          ? `${base}/${row.product!.short_code}`
+          : `${base}/go/${row.product!.slug}`,
       })),
   });
 }

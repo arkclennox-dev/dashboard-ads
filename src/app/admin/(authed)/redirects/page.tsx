@@ -43,7 +43,7 @@ export default async function AdminRedirectsPage() {
                     <td className="font-medium text-ink">{p.title}</td>
                     <td>
                       <code className="rounded bg-surface px-2 py-1 text-xs text-brand-300">
-                        /go/{p.slug}
+                        {p.short_code ? `/${p.short_code}` : `/go/${p.slug}`}
                       </code>
                     </td>
                     <td className="text-ink-2 max-w-[260px] truncate">
@@ -63,6 +63,7 @@ export default async function AdminRedirectsPage() {
             slug: p.slug,
             title: p.title,
             destination_url: p.destination_url,
+            short_code: p.short_code,
           }))}
           siteUrl={env.siteUrl}
         />

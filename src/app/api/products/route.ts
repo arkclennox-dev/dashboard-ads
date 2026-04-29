@@ -49,6 +49,7 @@ export async function GET(request: Request) {
 const createSchema = z.object({
   title: z.string().min(1),
   slug: slugSchema,
+  short_code: z.string().min(2).max(40).optional().nullable(),
   description: z.string().optional().nullable(),
   image_url: z.string().url().optional().nullable(),
   destination_url: urlSchema,
@@ -69,9 +70,13 @@ export async function POST(request: Request) {
     return created(product);
   } catch (err) {
     const code = (err as { code?: string }).code;
+    const message = (err as Error).message ?? "Failed to create product";
     if (code === "CONFLICT" || code === "23505") {
-      return errors.conflict("Slug already exists");
+      return errors.conflict(message);
     }
-    return errors.server((err as Error).message);
+    if (code === "BAD_REQUEST") {
+      return errors.badRequest(message);
+    }
+    return errors.server(message);
   }
 }

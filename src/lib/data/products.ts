@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { isDemoMode } from "@/lib/env";
 import { getDemoStore } from "@/lib/demo-store";
 import { getSupabaseServiceRole } from "@/lib/supabase/server";
+import { generateShortCode, isValidShortCode } from "@/lib/short-code";
 import type { AffiliateProduct, ProductStatus } from "@/lib/types";
 
 export interface ProductWithStats extends AffiliateProduct {
@@ -9,11 +10,16 @@ export interface ProductWithStats extends AffiliateProduct {
   redirect_url: string;
 }
 
+function buildRedirectUrl(p: AffiliateProduct, siteUrl: string): string {
+  const base = siteUrl.replace(/\/$/, "");
+  return p.short_code ? `${base}/${p.short_code}` : `${base}/go/${p.slug}`;
+}
+
 function withStats(p: AffiliateProduct, totalClicks: number, siteUrl: string): ProductWithStats {
   return {
     ...p,
     total_clicks: totalClicks,
-    redirect_url: `${siteUrl.replace(/\/$/, "")}/go/${p.slug}`,
+    redirect_url: buildRedirectUrl(p, siteUrl),
   };
 }
 
@@ -123,6 +129,24 @@ export async function getProductBySlug(slug: string): Promise<AffiliateProduct |
   return (data as AffiliateProduct | null) ?? null;
 }
 
+export async function getProductByShortCode(
+  code: string,
+): Promise<AffiliateProduct | null> {
+  if (!code) return null;
+  if (isDemoMode) {
+    const store = getDemoStore();
+    return store.products.find((p) => p.short_code === code) ?? null;
+  }
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("affiliate_products")
+    .select("*")
+    .eq("short_code", code)
+    .maybeSingle();
+  return (data as AffiliateProduct | null) ?? null;
+}
+
 export async function getProductById(id: string): Promise<AffiliateProduct | null> {
   if (isDemoMode) {
     const store = getDemoStore();
@@ -141,6 +165,7 @@ export async function getProductById(id: string): Promise<AffiliateProduct | nul
 export interface CreateProductArgs {
   title: string;
   slug: string;
+  short_code?: string | null;
   description?: string | null;
   image_url?: string | null;
   destination_url: string;
@@ -150,17 +175,69 @@ export interface CreateProductArgs {
   notes?: string | null;
 }
 
+async function resolveShortCode(
+  desired: string | null | undefined,
+  supabase: ReturnType<typeof getSupabaseServiceRole> | null,
+): Promise<string> {
+  if (desired && desired.trim().length > 0) {
+    const trimmed = desired.trim();
+    if (!isValidShortCode(trimmed)) {
+      throw Object.assign(
+        new Error(
+          "Invalid short code — use 2-40 characters (letters, digits, '-', '_') and avoid reserved paths.",
+        ),
+        { code: "BAD_REQUEST" },
+      );
+    }
+    if (supabase) {
+      const { data } = await supabase
+        .from("affiliate_products")
+        .select("id")
+        .eq("short_code", trimmed)
+        .maybeSingle();
+      if (data) {
+        throw Object.assign(new Error("Short code already in use"), {
+          code: "CONFLICT",
+        });
+      }
+    }
+    return trimmed;
+  }
+  if (!supabase) return generateShortCode();
+  for (let i = 0; i < 6; i++) {
+    const candidate = generateShortCode();
+    const { data } = await supabase
+      .from("affiliate_products")
+      .select("id")
+      .eq("short_code", candidate)
+      .maybeSingle();
+    if (!data) return candidate;
+  }
+  return generateShortCode(8);
+}
+
 export async function createProduct(args: CreateProductArgs): Promise<AffiliateProduct> {
   if (isDemoMode) {
     const store = getDemoStore();
     if (store.products.some((p) => p.slug === args.slug)) {
       throw Object.assign(new Error("Slug already exists"), { code: "CONFLICT" });
     }
+    const desired = args.short_code?.trim();
+    if (desired && !isValidShortCode(desired)) {
+      throw Object.assign(new Error("Invalid short code"), { code: "BAD_REQUEST" });
+    }
+    if (desired && store.products.some((p) => p.short_code === desired)) {
+      throw Object.assign(new Error("Short code already in use"), { code: "CONFLICT" });
+    }
+    const short_code = desired && desired.length > 0
+      ? desired
+      : generateShortCode();
     const now = new Date().toISOString();
     const product: AffiliateProduct = {
       id: randomUUID(),
       title: args.title,
       slug: args.slug,
+      short_code,
       description: args.description ?? null,
       image_url: args.image_url ?? null,
       destination_url: args.destination_url,
@@ -176,11 +253,13 @@ export async function createProduct(args: CreateProductArgs): Promise<AffiliateP
   }
   const supabase = getSupabaseServiceRole();
   if (!supabase) throw new Error("Supabase not configured");
+  const short_code = await resolveShortCode(args.short_code, supabase);
   const { data, error } = await supabase
     .from("affiliate_products")
     .insert({
       title: args.title,
       slug: args.slug,
+      short_code,
       description: args.description,
       image_url: args.image_url,
       destination_url: args.destination_url,

@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 function buildCtaUrl(
   productSlug: string,
+  productShortCode: string | null,
   landingSlug: string,
   search: Record<string, string | string[] | undefined>,
 ): string {
@@ -36,7 +37,8 @@ function buildCtaUrl(
     if (typeof v === "string" && v) params.set(k, v);
   }
   params.set("lp", landingSlug);
-  return `/go/${productSlug}?${params.toString()}`;
+  const path = productShortCode ? `/${productShortCode}` : `/go/${productSlug}`;
+  return `${path}?${params.toString()}`;
 }
 
 export default async function LandingPage({ params, searchParams }: PageProps) {
@@ -65,7 +67,7 @@ export default async function LandingPage({ params, searchParams }: PageProps) {
         {lp.products.map((row) => {
           const product = row.product;
           if (!product) return null;
-          const ctaUrl = buildCtaUrl(product.slug, lp.slug, searchParams);
+          const ctaUrl = buildCtaUrl(product.slug, product.short_code ?? null, lp.slug, searchParams);
           const title = row.custom_title || product.title;
           const description = row.custom_description || product.description;
           return (

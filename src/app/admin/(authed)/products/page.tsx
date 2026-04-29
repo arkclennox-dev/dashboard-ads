@@ -87,7 +87,7 @@ export default async function AdminProductsPage() {
                     <td className="text-ink-2">{formatDate(p.created_at)}</td>
                     <td>
                       <code className="rounded bg-surface px-2 py-1 text-xs text-brand-300">
-                        /go/{p.slug}
+                        {p.short_code ? `/${p.short_code}` : `/go/${p.slug}`}
                       </code>
                     </td>
                     <td className="text-right">

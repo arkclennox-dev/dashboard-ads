@@ -156,6 +156,7 @@ export default async function AdminOverviewPage() {
               slug: p.slug,
               title: p.title,
               destination_url: p.destination_url,
+              short_code: p.short_code,
             }))}
             siteUrl={env.siteUrl}
           />

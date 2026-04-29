@@ -64,6 +64,7 @@ export interface RedirectBuilderProduct {
   slug: string;
   title: string;
   destination_url: string;
+  short_code?: string | null;
 }
 
 interface RedirectLinkBuilderProps {
@@ -133,7 +134,10 @@ export function RedirectLinkBuilder({ products, siteUrl }: RedirectLinkBuilderPr
         ? `${selectedProduct.destination_url}${sep}${qs}`
         : selectedProduct.destination_url;
     }
-    const base = `${origin}/go/${selectedProduct.slug}`;
+    const path = selectedProduct.short_code
+      ? `/${selectedProduct.short_code}`
+      : `/go/${selectedProduct.slug}`;
+    const base = `${origin}${path}`;
     const params: Array<[string, string]> = [];
     if (appendUtm) {
       params.push(["utm_source", trafficSource]);
@@ -204,7 +208,7 @@ export function RedirectLinkBuilder({ products, siteUrl }: RedirectLinkBuilderPr
               {!hasProducts && <option value="">No products yet</option>}
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.title} (/go/{p.slug})
+                  {p.title} ({p.short_code ? `/${p.short_code}` : `/go/${p.slug}`})
                 </option>
               ))}
             </select>
@@ -228,9 +232,15 @@ export function RedirectLinkBuilder({ products, siteUrl }: RedirectLinkBuilderPr
           <Field label="Domain" hint="Your site origin (NEXT_PUBLIC_SITE_URL).">
             <input value={host} readOnly className={`${inputCls} cursor-not-allowed text-muted`} />
           </Field>
-          <Field label="Path" hint="Tracked redirect path: /go/<slug>.">
+          <Field label="Path" hint="Tracked redirect path.">
             <input
-              value={selectedProduct ? `/go/${selectedProduct.slug}` : ""}
+              value={
+                selectedProduct
+                  ? selectedProduct.short_code
+                    ? `/${selectedProduct.short_code}`
+                    : `/go/${selectedProduct.slug}`
+                  : ""
+              }
               readOnly
               className={`${inputCls} cursor-not-allowed text-muted`}
             />
@@ -307,7 +317,7 @@ export function RedirectLinkBuilder({ products, siteUrl }: RedirectLinkBuilderPr
             label="Enable Redirect Tracking"
             checked={enableTracking}
             onChange={setEnableTracking}
-            hint="When on, the URL points at /go/<slug> so clicks are logged. When off, points straight at the destination."
+            hint="When on, the URL points at the short code so clicks are logged. When off, points straight at the destination."
           />
           <ToggleRow
             label="Enable Click ID (fbclid)"
