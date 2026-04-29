@@ -117,7 +117,7 @@ export default async function AdminOverviewPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="rounded-xl2 border border-border bg-surface-2 p-4">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Komisi</h3>
@@ -143,6 +143,20 @@ export default async function AdminOverviewPage() {
                 values={series.map((p) => p.spend)}
                 labels={labels}
                 color="#3b82f6"
+                formatY={(n) => `${Math.round(n)}`}
+              />
+            </div>
+            <div className="rounded-xl2 border border-border bg-surface-2 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Clicks Over Time</h3>
+                <button className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2">
+                  Daily <IconChevronDown width={14} height={14} />
+                </button>
+              </div>
+              <LineChart
+                values={series.map((p) => p.clicks)}
+                labels={labels}
+                color="#f59e0b"
                 formatY={(n) => `${Math.round(n)}`}
               />
             </div>
