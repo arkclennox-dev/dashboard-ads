@@ -111,45 +111,69 @@ async function loadReportSource(): Promise<ReportSource> {
 
 export async function buildAdSetRows(): Promise<AdSetRow[]> {
   const source = await loadReportSource();
-  const clicksByProduct = new Map<string, ClickEvent[]>();
-  source.clicks.forEach((c) => {
-    if (!c.product_id) return;
-    const arr = clicksByProduct.get(c.product_id) ?? [];
-    arr.push(c);
-    clicksByProduct.set(c.product_id, arr);
-  });
-  const spendByAdsetName = new Map<string, AdSpendReport[]>();
+
+  // Group ad_spend_reports by campaign + adset
+  const grouped = new Map<string, { rows: AdSpendReport[]; key: string }>();
   source.adSpend.forEach((a) => {
-    const key = a.adset_name ?? a.campaign_name;
-    const arr = spendByAdsetName.get(key) ?? [];
-    arr.push(a);
-    spendByAdsetName.set(key, arr);
+    const key = [a.campaign_name, a.adset_name ?? ""].filter(Boolean).join(" › ");
+    const entry = grouped.get(key) ?? { rows: [], key };
+    entry.rows.push(a);
+    grouped.set(key, entry);
   });
 
-  return source.products.map((p) => {
-    const clicksRows = clicksByProduct.get(p.id) ?? [];
-    const spendRows = spendByAdsetName.get(p.title) ?? [];
-    const clicks = clicksRows.length;
-    const spend = spendRows.reduce((s, r) => s + Number(r.spend ?? 0), 0);
-    const impressions = spendRows.reduce((s, r) => s + Number(r.impressions ?? 0), 0);
-    const linkClicks = spendRows.reduce((s, r) => s + Number(r.link_clicks ?? 0), 0);
-    const cpc = clicks > 0 ? spend / clicks : 0;
-    const ctr = impressions > 0 ? (linkClicks / impressions) * 100 : 0;
-    const nonDup = clicksRows.filter((c) => !c.is_duplicate && !c.is_bot).length;
-    const conversionRate = clicks > 0 ? (nonDup / clicks) * 100 : 0;
-    const roas = spend > 0 ? Math.max(1.5, 5 - spend / 250) : 0;
-    return {
+  // Commission totals for ROAS approximation
+  const totalKomisi = source.commissions.reduce((s, c) => s + Number(c.komisi ?? 0), 0);
+  const totalSpend = source.adSpend.reduce((s, a) => s + Number(a.spend ?? 0), 0);
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const cutoff = sevenDaysAgo.toISOString().slice(0, 10);
+
+  if (grouped.size === 0) {
+    // No ad spend data — fall back to product rows so the table is never empty
+    return source.products.map((p) => ({
       id: p.id,
       product_id: p.id,
       ad_set_name: p.title,
       status: statusFromProduct(p),
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      cpc: 0,
+      ctr: 0,
+      conversion_rate: 0,
+      roas: 0,
+    }));
+  }
+
+  return Array.from(grouped.values()).map(({ rows, key }, idx) => {
+    const spend = rows.reduce((s, r) => s + Number(r.spend ?? 0), 0);
+    const impressions = rows.reduce((s, r) => s + Number(r.impressions ?? 0), 0);
+    const linkClicks = rows.reduce((s, r) => s + Number(r.link_clicks ?? 0), 0);
+    const cpc = linkClicks > 0 ? spend / linkClicks : 0;
+    const ctr = impressions > 0 ? (linkClicks / impressions) * 100 : 0;
+    const latestDate = rows.map((r) => r.report_date).sort().at(-1) ?? "";
+    const status: AdSetRow["status"] = latestDate >= cutoff ? "Active" : "Paused";
+    const roas = totalSpend > 0 ? (totalKomisi / totalSpend) * (spend / (totalSpend / grouped.size || 1)) > 0
+      ? Number((totalKomisi / totalSpend).toFixed(2))
+      : 0
+      : 0;
+    const conversionRate = source.commissions.length > 0 && linkClicks > 0
+      ? (source.commissions.reduce((s, c) => s + c.pesanan, 0) /
+         source.commissions.reduce((s, c) => s + c.klik, 0)) * 100
+      : 0;
+    return {
+      id: `adset-${idx}`,
+      product_id: "",
+      ad_set_name: key,
+      status,
       spend,
       impressions,
-      clicks,
+      clicks: linkClicks,
       cpc,
       ctr,
-      conversion_rate: conversionRate,
-      roas: Number(roas.toFixed(2)),
+      conversion_rate: isFinite(conversionRate) ? conversionRate : 0,
+      roas: isFinite(roas) ? roas : 0,
     };
   });
 }

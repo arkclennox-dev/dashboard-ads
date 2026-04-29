@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { isDemoMode } from "@/lib/env";
 import { getDemoStore } from "@/lib/demo-store";
-import { getSupabaseServiceRole } from "@/lib/supabase/server";
+import { getSupabaseServer, getSupabaseServiceRole } from "@/lib/supabase/server";
 import { generateShortCode, isValidShortCode } from "@/lib/short-code";
 import type { AffiliateProduct, ProductStatus } from "@/lib/types";
 
@@ -314,7 +314,7 @@ export async function deleteProduct(id: string, hard = false): Promise<boolean> 
     };
     return true;
   }
-  const supabase = getSupabaseServiceRole();
+  const supabase = getSupabaseServiceRole() ?? getSupabaseServer();
   if (!supabase) return false;
   if (hard) {
     const { error } = await supabase.from("affiliate_products").delete().eq("id", id);
