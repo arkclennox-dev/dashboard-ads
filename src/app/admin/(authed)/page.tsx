@@ -1,5 +1,5 @@
 import { AdSetsTable } from "@/components/ad-sets-table";
-import { BarChart, LineChart } from "@/components/charts";
+import { DashboardCharts } from "@/components/dashboard-charts";
 import {
   IconCalendar,
   IconChevronDown,
@@ -117,67 +117,12 @@ export default async function AdminOverviewPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="rounded-xl2 border border-border bg-surface-2 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Komisi</h3>
-                <button className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2">
-                  Daily <IconChevronDown width={14} height={14} />
-                </button>
-              </div>
-              <LineChart
-                values={series.map((p) => p.komisi)}
-                labels={labels}
-                color="#22c55e"
-                formatY={(n) => `Rp ${Math.round(n / 1000)}k`}
-              />
-            </div>
-            <div className="rounded-xl2 border border-border bg-surface-2 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Spend by Date</h3>
-                <button className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2">
-                  Daily <IconChevronDown width={14} height={14} />
-                </button>
-              </div>
-              <BarChart
-                values={series.map((p) => p.spend)}
-                labels={labels}
-                color="#3b82f6"
-                formatY={(n) => `Rp ${Math.round(n / 1000)}k`}
-              />
-            </div>
-            <div className="rounded-xl2 border border-border bg-surface-2 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Clicks Over Time</h3>
-                <button className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2">
-                  Daily <IconChevronDown width={14} height={14} />
-                </button>
-              </div>
-              <LineChart
-                values={series.map((p) => p.clicks)}
-                labels={labels}
-                color="#f59e0b"
-                formatY={(n) => `${Math.round(n)}`}
-              />
-            </div>
-            <div className="rounded-xl2 border border-border bg-surface-2 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold">Net Profit</h3>
-                  <p className="text-[11px] text-muted">Komisi − Spend per hari</p>
-                </div>
-                <button className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2">
-                  Daily <IconChevronDown width={14} height={14} />
-                </button>
-              </div>
-              <LineChart
-                values={series.map((p) => p.komisi - p.spend)}
-                labels={labels}
-                color="#a855f7"
-                formatY={(n) => `Rp ${Math.round(n / 1000)}k`}
-              />
-            </div>
-          </div>
+          <DashboardCharts
+            komisi={series.map((p) => p.komisi)}
+            spend={series.map((p) => p.spend)}
+            clicks={series.map((p) => p.clicks)}
+            labels={labels}
+          />
         </div>
 
         <div className="xl:sticky xl:top-6">
