@@ -82,7 +82,7 @@ export function RedirectLinkBuilder({
   const [campaign, setCampaign] = useState("");
   const [content, setContent] = useState("");
   const [term, setTerm] = useState("");
-  const [enableClickId, setEnableClickId] = useState(true);
+  const [enableClickId, setEnableClickId] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
