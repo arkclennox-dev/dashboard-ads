@@ -61,7 +61,6 @@ const createSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (isDemoMode) return errors.demoReadOnly();
   const auth = await authorize(request, ["products:write"]);
   if (!auth.ok) return errors.unauthorized(auth.message);
   const parsed = await parseJson(request, createSchema);

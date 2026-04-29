@@ -87,7 +87,7 @@ export default async function AdminLandingPagesPage() {
                       </a>
                     </td>
                     <td className="text-right">
-                      <LandingPageRowActions id={p.id} status={p.status} />
+                      <LandingPageRowActions id={p.id} title={p.title} status={p.status} />
                     </td>
                   </tr>
                 ))

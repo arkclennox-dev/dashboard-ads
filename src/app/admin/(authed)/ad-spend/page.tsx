@@ -1,6 +1,7 @@
 import { PageShell } from "@/components/page-shell";
 import { listAdSpend } from "@/lib/data/ad-spend";
 import { formatCurrency, formatNumber } from "@/lib/format";
+import { AdSpendCsvImport } from "./csv-import";
 import { AdSpendForm } from "./ad-spend-form";
 
 export const dynamic = "force-dynamic";
@@ -8,9 +9,13 @@ export const dynamic = "force-dynamic";
 export default async function AdminAdSpendPage() {
   const { items, total } = await listAdSpend({ page: 1, pageSize: 50 });
   return (
-    <PageShell title="Ad spend" subtitle="Manual Meta Ads spend reports.">
+    <PageShell title="Biaya Iklan" subtitle="Import dan input manual data biaya Meta Ads.">
       <div className="mb-5 rounded-xl2 border border-border bg-surface-2 p-4">
-        <h2 className="mb-3 text-sm font-semibold">Add new spend report</h2>
+        <h2 className="mb-3 text-sm font-semibold">Import dari CSV / XLSX</h2>
+        <AdSpendCsvImport />
+      </div>
+      <div className="mb-5 rounded-xl2 border border-border bg-surface-2 p-4">
+        <h2 className="mb-3 text-sm font-semibold">Input manual</h2>
         <AdSpendForm />
       </div>
       <div className="rounded-xl2 border border-border bg-surface-2">

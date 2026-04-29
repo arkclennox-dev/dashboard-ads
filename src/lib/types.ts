@@ -102,6 +102,19 @@ export interface SiteSettings {
   updated_at: string;
 }
 
+export interface CommissionReport {
+  id: string;
+  report_date: string;
+  klik: number;
+  pesanan: number;
+  komisi: number;
+  pembelian: number;
+  produk_terjual: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiKeyMeta {
   id: string;
   name: string;

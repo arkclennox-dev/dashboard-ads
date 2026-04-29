@@ -239,3 +239,19 @@ export async function setLandingPageStatus(
     .maybeSingle();
   return (data as LandingPage | null) ?? null;
 }
+
+export async function deleteLandingPage(id: string): Promise<boolean> {
+  if (isDemoMode) {
+    const store = getDemoStore();
+    const before = store.landingPages.length;
+    store.landingPages = store.landingPages.filter((p) => p.id !== id);
+    store.landingPageProducts = store.landingPageProducts.filter(
+      (p) => p.landing_page_id !== id,
+    );
+    return store.landingPages.length < before;
+  }
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) return false;
+  const { error } = await supabase.from("landing_pages").delete().eq("id", id);
+  return !error;
+}

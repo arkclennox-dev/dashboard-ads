@@ -1,7 +1,7 @@
 import { isDemoMode } from "./env";
 import { getDemoStore } from "./demo-store";
 import { getSupabaseServiceRole } from "./supabase/server";
-import type { AdSpendReport, ClickEvent, AffiliateProduct } from "./types";
+import type { AdSpendReport, AffiliateProduct, ClickEvent, CommissionReport } from "./types";
 
 export interface AdSetRow {
   id: string;
@@ -39,6 +39,7 @@ export interface DailyPoint {
   date: string;
   clicks: number;
   spend: number;
+  komisi: number;
 }
 
 function dayKey(iso: string): string {
@@ -56,6 +57,7 @@ interface ReportSource {
   products: AffiliateProduct[];
   clicks: ClickEvent[];
   adSpend: AdSpendReport[];
+  commissions: CommissionReport[];
 }
 
 async function loadReportSource(): Promise<ReportSource> {
@@ -65,18 +67,19 @@ async function loadReportSource(): Promise<ReportSource> {
       products: store.products,
       clicks: store.clicks,
       adSpend: store.adSpend,
+      commissions: store.commissions,
     };
   }
   const supabase = getSupabaseServiceRole();
   if (!supabase) {
-    return { products: [], clicks: [], adSpend: [] };
+    return { products: [], clicks: [], adSpend: [], commissions: [] };
   }
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
   const cutoffIso = cutoff.toISOString();
   const cutoffDate = cutoffIso.slice(0, 10);
 
-  const [productsRes, clicksRes, adSpendRes] = await Promise.all([
+  const [productsRes, clicksRes, adSpendRes, commissionsRes] = await Promise.all([
     supabase.from("affiliate_products").select("*"),
     supabase
       .from("click_events")
@@ -90,12 +93,19 @@ async function loadReportSource(): Promise<ReportSource> {
       .gte("report_date", cutoffDate)
       .order("report_date", { ascending: false })
       .limit(5000),
+    supabase
+      .from("commission_reports")
+      .select("*")
+      .gte("report_date", cutoffDate)
+      .order("report_date", { ascending: false })
+      .limit(5000),
   ]);
 
   return {
     products: (productsRes.data ?? []) as AffiliateProduct[],
     clicks: (clicksRes.data ?? []) as ClickEvent[],
     adSpend: (adSpendRes.data ?? []) as AdSpendReport[],
+    commissions: (commissionsRes.data ?? []) as CommissionReport[],
   };
 }
 
@@ -145,12 +155,12 @@ export async function buildAdSetRows(): Promise<AdSetRow[]> {
 }
 
 function buildDailySeriesFromSource(source: ReportSource, days: number): DailyPoint[] {
-  const buckets = new Map<string, { clicks: number; spend: number }>();
+  const buckets = new Map<string, { clicks: number; spend: number; komisi: number }>();
   const today = new Date();
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    buckets.set(d.toISOString().slice(0, 10), { clicks: 0, spend: 0 });
+    buckets.set(d.toISOString().slice(0, 10), { clicks: 0, spend: 0, komisi: 0 });
   }
   source.clicks.forEach((c) => {
     const key = dayKey(c.created_at);
@@ -161,10 +171,15 @@ function buildDailySeriesFromSource(source: ReportSource, days: number): DailyPo
     const bucket = buckets.get(a.report_date);
     if (bucket) bucket.spend += Number(a.spend ?? 0);
   });
+  source.commissions.forEach((c) => {
+    const bucket = buckets.get(c.report_date);
+    if (bucket) bucket.komisi += Number(c.komisi ?? 0);
+  });
   return Array.from(buckets.entries()).map(([date, v]) => ({
     date,
     clicks: v.clicks,
     spend: Number(v.spend.toFixed(2)),
+    komisi: Number(v.komisi.toFixed(0)),
   }));
 }
 
@@ -199,17 +214,19 @@ export async function buildOverviewMetrics(): Promise<OverviewMetrics> {
     .reduce((s, r) => s + Number(r.impressions ?? 0), 0);
   const prevCtr = prevImpressions ? (prevClicks / prevImpressions) * 100 : 0;
 
-  const nonDup = source.clicks.filter(
-    (c) => !c.is_duplicate && !c.is_bot && recent.some((d) => d.date === c.created_at.slice(0, 10)),
-  ).length;
-  const conversionRate = clicks ? (nonDup / clicks) * 100 : 0;
-  const prevNonDup = source.clicks.filter(
-    (c) =>
-      !c.is_duplicate &&
-      !c.is_bot &&
-      previous.some((d) => d.date === c.created_at.slice(0, 10)),
-  ).length;
-  const prevConversionRate = prevClicks ? (prevNonDup / prevClicks) * 100 : 0;
+  // Conversion rate from commission data: pesanan / klik
+  const recentCommissions = source.commissions.filter((c) =>
+    recent.some((d) => d.date === c.report_date),
+  );
+  const prevCommissions = source.commissions.filter((c) =>
+    previous.some((d) => d.date === c.report_date),
+  );
+  const totalPesanan = recentCommissions.reduce((s, c) => s + c.pesanan, 0);
+  const totalKomisiKlik = recentCommissions.reduce((s, c) => s + c.klik, 0);
+  const prevPesanan = prevCommissions.reduce((s, c) => s + c.pesanan, 0);
+  const prevKomisiKlik = prevCommissions.reduce((s, c) => s + c.klik, 0);
+  const conversionRate = totalKomisiKlik > 0 ? (totalPesanan / totalKomisiKlik) * 100 : 0;
+  const prevConversionRate = prevKomisiKlik > 0 ? (prevPesanan / prevKomisiKlik) * 100 : 0;
 
   const pct = (a: number, b: number) => (b === 0 ? 0 : ((a - b) / b) * 100);
 
@@ -228,6 +245,11 @@ export async function buildOverviewMetrics(): Promise<OverviewMetrics> {
     clicksSparkline: recent.map((p) => p.clicks),
     cpcSparkline: recent.map((p) => (p.clicks ? p.spend / p.clicks : 0)),
     ctrSparkline: recent.map((p) => p.clicks * 0.003 + 1.4),
-    conversionRateSparkline: recent.map((p) => (p.clicks ? 90 + (p.clicks % 5) : 0)),
+    conversionRateSparkline: recentCommissions.length > 0
+      ? recent.map((d) => {
+          const c = recentCommissions.find((r) => r.report_date === d.date);
+          return c && c.klik > 0 ? (c.pesanan / c.klik) * 100 : 0;
+        })
+      : recent.map((p) => (p.clicks ? 90 + (p.clicks % 5) : 0)),
   };
 }

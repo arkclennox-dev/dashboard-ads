@@ -109,7 +109,7 @@ export default async function AdminOverviewPage() {
             />
             <MetricCard
               label="Conversion Rate"
-              hint="Non-duplicate clicks ÷ all redirect clicks."
+              hint="Pesanan ÷ klik dari data komisi Shopee."
               value={formatPercent(metrics.conversionRate)}
               delta={metrics.conversionRateDelta}
               values={metrics.conversionRateSparkline}
@@ -120,16 +120,16 @@ export default async function AdminOverviewPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="rounded-xl2 border border-border bg-surface-2 p-4">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Clicks Over Time</h3>
+                <h3 className="text-sm font-semibold">Komisi</h3>
                 <button className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2">
                   Daily <IconChevronDown width={14} height={14} />
                 </button>
               </div>
               <LineChart
-                values={series.map((p) => p.clicks)}
+                values={series.map((p) => p.komisi)}
                 labels={labels}
-                color="#3b82f6"
-                formatY={(n) => `${Math.round(n / 1000) * 1000 || Math.round(n)}`}
+                color="#22c55e"
+                formatY={(n) => `Rp ${Math.round(n / 1000)}k`}
               />
             </div>
             <div className="rounded-xl2 border border-border bg-surface-2 p-4">

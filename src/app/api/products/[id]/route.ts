@@ -8,7 +8,6 @@ import {
   getProductById,
   updateProduct,
 } from "@/lib/data/products";
-import { isDemoMode } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +32,6 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  if (isDemoMode) return errors.demoReadOnly();
   const auth = await authorize(request, ["products:write"]);
   if (!auth.ok) return errors.unauthorized(auth.message);
   const parsed = await parseJson(request, patchSchema);
@@ -46,7 +44,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  if (isDemoMode) return errors.demoReadOnly();
   const auth = await authorize(request, ["products:write"]);
   if (!auth.ok) return errors.unauthorized(auth.message);
   const url = new URL(request.url);

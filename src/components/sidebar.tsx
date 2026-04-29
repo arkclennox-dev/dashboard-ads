@@ -35,6 +35,7 @@ const secondary: NavItem[] = [
   { href: "/admin/redirects", label: "Redirect Builder", icon: IconLink },
   { href: "/admin/reports", label: "Laporan", icon: IconChart },
   { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch },
+  { href: "/admin/komisi", label: "Komisi", icon: IconTag },
 ];
 
 const tertiary: NavItem[] = [

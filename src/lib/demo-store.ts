@@ -4,6 +4,7 @@ import type {
   AffiliateProduct,
   ApiKeyMeta,
   ClickEvent,
+  CommissionReport,
   LandingPage,
   LandingPageProduct,
   SiteSettings,
@@ -15,6 +16,7 @@ interface Store {
   landingPageProducts: LandingPageProduct[];
   clicks: ClickEvent[];
   adSpend: AdSpendReport[];
+  commissions: CommissionReport[];
   settings: SiteSettings;
   apiKeys: ApiKeyMeta[];
 }
@@ -249,12 +251,36 @@ function seed(): Store {
     updated_at: now,
   };
 
+  const commissions: CommissionReport[] = [];
+  for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - dayOffset);
+    const dateStr = day.toISOString().slice(0, 10);
+    const klik = 80 + Math.floor(Math.random() * 40);
+    const pesanan = Math.floor(klik * (0.03 + Math.random() * 0.04));
+    const pembelian = pesanan * (150000 + Math.floor(Math.random() * 100000));
+    const komisi = Math.floor(pembelian * 0.025);
+    commissions.push({
+      id: randomUUID(),
+      report_date: dateStr,
+      klik,
+      pesanan,
+      komisi,
+      pembelian,
+      produk_terjual: pesanan,
+      notes: null,
+      created_at: now,
+      updated_at: now,
+    });
+  }
+
   return {
     products,
     landingPages: [landing],
     landingPageProducts,
     clicks,
     adSpend,
+    commissions,
     settings,
     apiKeys: [],
   };
