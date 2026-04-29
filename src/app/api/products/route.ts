@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { authorize } from "@/lib/api/auth";
 import { errors, ok, created } from "@/lib/api/response";
@@ -67,6 +68,8 @@ export async function POST(request: Request) {
   if (!parsed.ok) return parsed.response;
   try {
     const product = await createProduct(parsed.data);
+    revalidatePath("/admin");
+    revalidatePath("/admin/products");
     return created(product);
   } catch (err) {
     const code = (err as { code?: string }).code;

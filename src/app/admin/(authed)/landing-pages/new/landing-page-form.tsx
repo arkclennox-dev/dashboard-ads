@@ -170,7 +170,7 @@ export function LandingPageForm({ products }: { products: ProductOption[] }) {
                   />
                   <span>
                     <span className="text-ink">{p.title}</span>
-                    <span className="ml-2 text-muted">/go/{p.slug}</span>
+                    <span className="ml-2 text-muted">/{p.slug}</span>
                   </span>
                 </label>
               </li>

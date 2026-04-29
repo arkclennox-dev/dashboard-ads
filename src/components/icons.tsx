@@ -217,6 +217,12 @@ export const IconTrend = (p: IconProps) => (
   </svg>
 );
 
+export const IconPlus = (p: IconProps) => (
+  <svg {...baseProps} {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
 export const IconLogo = (p: IconProps) => (
   <svg
     width={28}

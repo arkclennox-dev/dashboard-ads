@@ -12,7 +12,7 @@ export default async function AdminClicksPage() {
     include_duplicates: true,
   });
   return (
-    <PageShell title="Clicks" subtitle="Recent click events from /go/[slug] redirects.">
+    <PageShell title="Clicks" subtitle="Recent click events from /[slug] redirects.">
       <div className="mb-3 flex justify-end">
         <a
           href="/api/clicks/export.csv"

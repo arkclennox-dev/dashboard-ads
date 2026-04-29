@@ -15,7 +15,7 @@ export default async function AdminProductsPage() {
   return (
     <PageShell
       title="Products"
-      subtitle="Affiliate destinations exposed via /go/[slug]"
+      subtitle="Affiliate destinations exposed via /[slug]"
       actions={
         <Link
           href="/admin/products/new"

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { authorize } from "@/lib/api/auth";
 import { errors, ok } from "@/lib/api/response";
@@ -39,6 +40,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (!parsed.ok) return parsed.response;
   const product = await updateProduct(params.id, parsed.data);
   if (!product) return errors.notFound("Product not found");
+  revalidatePath("/admin");
+  revalidatePath("/admin/products");
   return ok(product);
 }
 
@@ -50,5 +53,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const hard = url.searchParams.get("hard") === "true";
   const okDelete = await deleteProduct(params.id, hard);
   if (!okDelete) return errors.notFound("Product not found");
+  revalidatePath("/admin");
+  revalidatePath("/admin/products");
   return ok({ id: params.id, deleted: true });
 }

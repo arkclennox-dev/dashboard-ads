@@ -85,7 +85,7 @@ export default async function AdminOverviewPage() {
             />
             <MetricCard
               label="Clicks"
-              hint="Total clicks tracked via /go/[slug]."
+              hint="Total clicks tracked via /[slug]."
               value={formatNumber(metrics.clicks)}
               delta={metrics.clicksDelta}
               values={metrics.clicksSparkline}

@@ -10,9 +10,15 @@ function slugify(s: string): string {
   return s
     .toLowerCase()
     .trim()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+function randomSlug(): string {
+  return Math.random().toString(36).slice(2, 8);
 }
 
 export function ProductForm() {
@@ -31,7 +37,6 @@ export function ProductForm() {
 
   function onTitleChange(v: string) {
     setTitle(v);
-    if (!slugTouched) setSlug(slugify(v));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -73,35 +78,44 @@ export function ProductForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="grid max-w-2xl grid-cols-1 gap-4"
-    >
+    <form onSubmit={onSubmit} className="grid max-w-2xl grid-cols-1 gap-4">
       <label className="block">
         <div className="mb-1.5 text-xs font-medium text-ink-2">Title</div>
         <input
           className={inputCls}
-          placeholder="Produk Test 01"
+          placeholder="Sepatu Nike Air Max"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           required
         />
       </label>
+
       <label className="block">
-        <div className="mb-1.5 text-xs font-medium text-ink-2">Slug</div>
-        <input
-          className={inputCls}
-          placeholder="produk-test-01"
-          value={slug}
-          onChange={(e) => {
-            setSlugTouched(true);
-            setSlug(e.target.value);
-          }}
-          pattern="[a-z0-9-]+"
-          title="lowercase letters, numbers, dashes only"
-          required
-        />
+        <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink-2">
+          Custom Link{" "}
+          <span className="font-normal text-muted">(opsional — digenerate otomatis jika kosong)</span>
+        </div>
+        <div className="flex items-center rounded-lg border border-border bg-surface focus-within:border-brand focus-within:ring-1 focus-within:ring-brand">
+          <span className="select-none border-r border-border px-2.5 py-2 text-xs text-muted">
+            /
+          </span>
+          <input
+            value={slug}
+            onChange={(e) => {
+              setSlugTouched(true);
+              setSlug(
+                e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-]/g, "")
+                  .slice(0, 80),
+              );
+            }}
+            placeholder={title ? slugify(title) : "abc123"}
+            className="flex-1 bg-transparent px-3 py-2 text-sm text-ink placeholder:text-muted-2 focus:outline-none"
+          />
+        </div>
       </label>
+
       <label className="block">
         <div className="mb-1.5 text-xs font-medium text-ink-2">
           Short code <span className="text-muted-2">(optional — leave blank for random)</span>
@@ -129,6 +143,7 @@ export function ProductForm() {
           required
         />
       </label>
+
       <label className="block">
         <div className="mb-1.5 text-xs font-medium text-ink-2">Description</div>
         <textarea
@@ -138,6 +153,7 @@ export function ProductForm() {
           onChange={(e) => setDescription(e.target.value)}
         />
       </label>
+
       <div className="grid grid-cols-2 gap-4">
         <label className="block">
           <div className="mb-1.5 text-xs font-medium text-ink-2">Category</div>
@@ -158,6 +174,7 @@ export function ProductForm() {
           />
         </label>
       </div>
+
       <label className="block">
         <div className="mb-1.5 text-xs font-medium text-ink-2">Status</div>
         <select
@@ -169,11 +186,13 @@ export function ProductForm() {
           <option value="inactive">inactive</option>
         </select>
       </label>
+
       {error ? (
         <div className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       ) : null}
+
       <div className="flex items-center gap-3">
         <button
           type="submit"
@@ -182,10 +201,7 @@ export function ProductForm() {
         >
           {busy ? "Saving…" : "Save product"}
         </button>
-        <a
-          href="/admin/products"
-          className="text-sm text-muted hover:text-ink-2"
-        >
+        <a href="/admin/products" className="text-sm text-muted hover:text-ink-2">
           Cancel
         </a>
       </div>
