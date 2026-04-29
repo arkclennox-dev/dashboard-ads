@@ -297,32 +297,28 @@ export async function updateProduct(
   return (data as AffiliateProduct | null) ?? null;
 }
 
-export async function deleteProduct(id: string, hard = false): Promise<boolean> {
+export async function deleteProduct(id: string, hard = false): Promise<{ ok: boolean; error?: string }> {
   if (isDemoMode) {
     const store = getDemoStore();
     if (hard) {
       const before = store.products.length;
       store.products = store.products.filter((p) => p.id !== id);
-      return store.products.length < before;
+      return { ok: store.products.length < before };
     }
     const idx = store.products.findIndex((p) => p.id === id);
-    if (idx < 0) return false;
-    store.products[idx] = {
-      ...store.products[idx],
-      status: "inactive",
-      updated_at: new Date().toISOString(),
-    };
-    return true;
+    if (idx < 0) return { ok: false, error: "Product not found" };
+    store.products[idx] = { ...store.products[idx], status: "inactive", updated_at: new Date().toISOString() };
+    return { ok: true };
   }
   const supabase = getSupabaseServiceRole() ?? getSupabaseServer();
-  if (!supabase) return false;
+  if (!supabase) return { ok: false, error: "Database client unavailable" };
   if (hard) {
     const { error } = await supabase.from("affiliate_products").delete().eq("id", id);
-    return !error;
+    return error ? { ok: false, error: error.message } : { ok: true };
   }
   const { error } = await supabase
     .from("affiliate_products")
     .update({ status: "inactive", updated_at: new Date().toISOString() })
     .eq("id", id);
-  return !error;
+  return error ? { ok: false, error: error.message } : { ok: true };
 }

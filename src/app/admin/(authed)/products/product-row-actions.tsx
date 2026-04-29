@@ -32,14 +32,17 @@ export function ProductRowActions({ id, title, status }: ProductRowActionsProps)
   }
 
   async function onDelete() {
-    if (!confirm(`Delete "${title}"? This soft-deletes (sets inactive).`)) return;
+    if (!confirm(`Hapus produk "${title}"? Tindakan ini tidak dapat dibatalkan.`)) return;
     setBusy("delete");
     try {
-      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(`/api/products/${id}?hard=true`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error?.message ?? `HTTP ${res.status}`);
+      }
       router.refresh();
     } catch (err) {
-      alert(`Failed: ${(err as Error).message}`);
+      alert(`Gagal hapus: ${(err as Error).message}`);
     } finally {
       setBusy(null);
     }

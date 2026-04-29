@@ -48,8 +48,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   if (!auth.ok) return errors.unauthorized(auth.message);
   const url = new URL(request.url);
   const hard = url.searchParams.get("hard") === "true";
-  const okDelete = await deleteProduct(params.id, hard);
-  if (!okDelete) return errors.notFound("Product not found");
+  const result = await deleteProduct(params.id, hard);
+  if (!result.ok) return errors.server(result.error ?? "Delete failed");
   revalidatePath("/admin");
   revalidatePath("/admin/products");
   return ok({ id: params.id, deleted: true });
