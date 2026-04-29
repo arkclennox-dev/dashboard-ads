@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  IconBell,
+  IconBook,
   IconBranch,
-  IconCard,
   IconChart,
   IconChevronDown,
   IconGrid,
@@ -26,23 +25,22 @@ interface NavItem {
 }
 
 const primary: NavItem[] = [
-  { href: "/admin", label: "Overview", icon: IconGrid },
-  { href: "/admin/products", label: "Campaigns", icon: IconMegaphone },
-  { href: "/admin/landing-pages", label: "Ad Sets", icon: IconLayers },
-  { href: "/admin/clicks", label: "Ads", icon: IconTag },
+  { href: "/admin", label: "Dashboard", icon: IconGrid },
+  { href: "/admin/products", label: "Produk", icon: IconMegaphone },
+  { href: "/admin/landing-pages", label: "Landing Page", icon: IconLayers },
+  { href: "/admin/clicks", label: "Klik", icon: IconTag },
 ];
 
 const secondary: NavItem[] = [
   { href: "/admin/redirects", label: "Redirect Builder", icon: IconLink },
-  { href: "/admin/reports", label: "Analytics", icon: IconChart },
-  { href: "/admin/ad-spend", label: "Attribution", icon: IconBranch },
+  { href: "/admin/reports", label: "Laporan", icon: IconChart },
+  { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch },
 ];
 
 const tertiary: NavItem[] = [
-  { href: "/admin/api-keys", label: "Integrations", icon: IconPlug },
-  { href: "/admin/settings", label: "Settings", icon: IconSettings },
-  { href: "/admin/billing", label: "Billing", icon: IconCard },
-  { href: "/admin/notifications", label: "Notifications", icon: IconBell, badge: 3 },
+  { href: "/admin/api-keys", label: "API Keys", icon: IconPlug },
+  { href: "/admin/settings", label: "Pengaturan", icon: IconSettings },
+  { href: "/admin/panduan", label: "Panduan", icon: IconBook },
 ];
 
 function NavLink({ item }: { item: NavItem }) {

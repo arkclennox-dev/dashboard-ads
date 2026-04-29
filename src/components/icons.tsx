@@ -195,6 +195,15 @@ export const IconInfo = (p: IconProps) => (
   </svg>
 );
 
+export const IconBook = (p: IconProps) => (
+  <svg {...baseProps} {...p}>
+    <path d="M4 19V6a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v13" />
+    <path d="M4 19a2 2 0 0 0 2 2h13" />
+    <path d="M8 10h8" />
+    <path d="M8 14h6" />
+  </svg>
+);
+
 export const IconEdit = (p: IconProps) => (
   <svg {...baseProps} {...p}>
     <path d="M12 20h9" />
