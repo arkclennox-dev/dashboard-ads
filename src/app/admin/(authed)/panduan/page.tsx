@@ -106,7 +106,7 @@ export default function PanduanPage() {
           </div>
           <p className="mt-2">
             Kamu bisa tambah <strong>UTM Parameters</strong> dengan membuka section
-            "Tambah UTM Parameters":
+            &ldquo;Tambah UTM Parameters&rdquo;:
           </p>
           <ul className="ml-4 list-disc space-y-1">
             <li><Code>utm_source</Code> — platform iklan (facebook, tiktok, dll)</li>
@@ -132,7 +132,7 @@ export default function PanduanPage() {
           </p>
           <ul className="ml-4 list-disc space-y-1">
             <li>
-              <strong>Meta Ads Manager</strong> — kolom "Website URL" saat buat iklan.
+              <strong>Meta Ads Manager</strong> — kolom &ldquo;Website URL&rdquo; saat buat iklan.
               Aktifkan fbclid jika ingin attribution Meta.
             </li>
             <li>
@@ -178,7 +178,7 @@ export default function PanduanPage() {
           <p>
             Landing page adalah halaman publik di{" "}
             <Code>yoursite.com/rekomendasi/[nama]</Code> yang menampilkan
-            beberapa produk sekaligus — cocok untuk konten "Top 5 Produk" atau
+            beberapa produk sekaligus — cocok untuk konten &ldquo;Top 5 Produk&rdquo; atau
             review multi-produk.
           </p>
           <p>
@@ -187,7 +187,7 @@ export default function PanduanPage() {
           <ul className="ml-4 list-disc space-y-1">
             <li>Isi judul, intro, dan pilih produk yang ingin ditampilkan</li>
             <li>Setiap produk bisa punya judul, deskripsi, dan teks tombol yang berbeda</li>
-            <li>Isi <strong>Disclosure text</strong> jika dibutuhkan (misal: "Konten ini mengandung link afiliasi")</li>
+            <li>Isi <strong>Disclosure text</strong> jika dibutuhkan (misal: &ldquo;Konten ini mengandung link afiliasi&rdquo;)</li>
             <li>Set status ke <strong>published</strong> agar halaman bisa diakses publik</li>
           </ul>
           <p>
@@ -227,7 +227,7 @@ export default function PanduanPage() {
             <li><strong>Non-duplicate clicks</strong> — klik unik (bukan pengulangan dari IP sama)</li>
             <li><strong>Meta link clicks</strong> — klik yang dilaporkan Meta (dari data manual)</li>
             <li><strong>Cost per redirect click</strong> — biaya per klik ke link kamu</li>
-            <li><strong>Click gap</strong> — selisih antara klik Meta vs klik yang benar-benar masuk ke server kamu. Angka positif berarti ada klik yang "hilang" di tengah jalan.</li>
+            <li><strong>Click gap</strong> — selisih antara klik Meta vs klik yang benar-benar masuk ke server kamu. Angka positif berarti ada klik yang &ldquo;hilang&rdquo; di tengah jalan.</li>
           </ul>
           <p>
             Bandingkan <strong>Click gap</strong> secara rutin — jika selisihnya besar,
