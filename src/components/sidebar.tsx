@@ -28,11 +28,11 @@ const primary: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: IconGrid },
   { href: "/admin/products", label: "Produk", icon: IconMegaphone },
   { href: "/admin/landing-pages", label: "Landing Page", icon: IconLayers },
-  { href: "/admin/clicks", label: "Klik", icon: IconTag },
+  { href: "/admin/redirects", label: "Redirect Builder", icon: IconLink },
 ];
 
 const secondary: NavItem[] = [
-  { href: "/admin/redirects", label: "Redirect Builder", icon: IconLink },
+  { href: "/admin/clicks", label: "Klik", icon: IconTag },
   { href: "/admin/reports", label: "Laporan", icon: IconChart },
   { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch },
   { href: "/admin/komisi", label: "Komisi", icon: IconTag },

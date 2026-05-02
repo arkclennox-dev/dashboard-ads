@@ -121,3 +121,53 @@ export async function createAdSpend(args: CreateAdSpendArgs): Promise<AdSpendRep
   if (error) throw error;
   return data as AdSpendReport;
 }
+
+export interface SyncMetaAdSpendArgs {
+  since: string;
+  until: string;
+  rows: {
+    report_date: string;
+    campaign_name: string;
+    adset_name: string | null;
+    ad_name: string | null;
+    spend: number;
+    impressions: number;
+    link_clicks: number;
+    landing_page_views: number;
+  }[];
+}
+
+export async function syncMetaAdSpend(args: SyncMetaAdSpendArgs): Promise<number> {
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) throw new Error("Supabase not configured");
+
+  // Delete existing meta records for the date range before re-inserting
+  const { error: delError } = await supabase
+    .from("ad_spend_reports")
+    .delete()
+    .eq("platform", "meta")
+    .gte("report_date", args.since)
+    .lte("report_date", args.until);
+  if (delError) throw delError;
+
+  if (args.rows.length === 0) return 0;
+
+  const now = new Date().toISOString();
+  const { error: insertError } = await supabase.from("ad_spend_reports").insert(
+    args.rows.map((r) => ({
+      report_date: r.report_date,
+      platform: "meta",
+      campaign_name: r.campaign_name,
+      adset_name: r.adset_name,
+      ad_name: r.ad_name,
+      spend: r.spend,
+      impressions: r.impressions,
+      link_clicks: r.link_clicks,
+      landing_page_views: r.landing_page_views,
+      updated_at: now,
+    })),
+  );
+  if (insertError) throw insertError;
+
+  return args.rows.length;
+}
