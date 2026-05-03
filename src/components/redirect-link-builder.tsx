@@ -265,7 +265,7 @@ export function RedirectLinkBuilder({
           disabled={saving}
           className="w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-600 disabled:opacity-60"
         >
-          {saving ? "Menyimpan…" : "Buat Link Trackable"}
+          {saving ? "Menyimpan…" : "Buat Link"}
         </button>
       </form>
 
@@ -297,7 +297,7 @@ export function RedirectLinkBuilder({
           </div>
         )}
 
-        {/* Trackable link output */}
+        {/* link output */}
         {generatedUrl && (
           <div className="relative rounded-lg border border-brand/30 bg-brand/5 px-3 py-2.5">
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-brand-300">
