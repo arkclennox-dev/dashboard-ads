@@ -13,7 +13,7 @@ function defaultUntil() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function MetaSync({ configured }: { configured: boolean }) {
+export function MetaSync() {
   const router = useRouter();
   const [since, setSince] = useState(defaultSince);
   const [until, setUntil] = useState(defaultUntil);
@@ -44,17 +44,6 @@ export function MetaSync({ configured }: { configured: boolean }) {
     } finally {
       setLoading(false);
     }
-  }
-
-  if (!configured) {
-    return (
-      <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
-        <strong>Belum dikonfigurasi.</strong> Tambahkan{" "}
-        <code className="font-mono">META_ACCESS_TOKEN</code> dan{" "}
-        <code className="font-mono">META_AD_ACCOUNT_ID</code> ke environment variables untuk
-        mengaktifkan fitur ini.
-      </div>
-    );
   }
 
   return (
