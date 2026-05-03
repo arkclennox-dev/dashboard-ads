@@ -1,6 +1,7 @@
 import { PageShell } from "@/components/page-shell";
 import { Sparkline } from "@/components/charts";
 import { RedirectLinkBuilder } from "@/components/redirect-link-builder";
+import { RedirectsTable } from "@/components/redirects-table";
 import { listProducts } from "@/lib/data/products";
 import { getRedirectClickStats } from "@/lib/data/clicks";
 import { env } from "@/lib/env";
@@ -51,44 +52,16 @@ export default async function AdminRedirectsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        {/* Redirect URLs table */}
-        <div className="rounded-xl2 border border-border bg-surface-2">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <h2 className="text-sm font-semibold">Redirect URLs</h2>
-            <span className="rounded-md bg-surface-3 px-2 py-0.5 text-[11px] font-medium text-ink-2">
-              {items.length} produk
-            </span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-muted">
-                <tr className="border-y border-border [&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-                  <th>Produk</th>
-                  <th>Redirect URL</th>
-                  <th>Destination</th>
-                  <th>Klik</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="row-hover border-b border-border last:border-0 [&>td]:px-3 [&>td]:py-3"
-                  >
-                    <td className="font-medium text-ink">{p.title}</td>
-                    <td>
-                      <code className="rounded bg-surface px-2 py-1 text-xs text-brand-300">
-                        {p.short_code ? `/${p.short_code}` : `/go/${p.slug}`}
-                      </code>
-                    </td>
-                    <td className="max-w-[260px] truncate text-ink-2">{p.destination_url}</td>
-                    <td className="text-ink-2">{formatNumber(p.total_clicks)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <RedirectsTable
+          items={items.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+            short_code: p.short_code,
+            destination_url: p.destination_url,
+            total_clicks: p.total_clicks,
+          }))}
+        />
 
         <RedirectLinkBuilder
           products={items.map((p) => ({
