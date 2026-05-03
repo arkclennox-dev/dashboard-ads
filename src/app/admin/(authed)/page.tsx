@@ -100,11 +100,11 @@ export default async function AdminOverviewPage() {
               comparison="vs May 9 – May 15"
             />
             <MetricCard
-              label="CTR"
-              hint="Internal clicks ÷ Meta impressions."
-              value={formatPercent(metrics.ctr)}
-              delta={metrics.ctrDelta}
-              values={metrics.ctrSparkline}
+              label="Profit"
+              hint="Total komisi semua waktu dikurangi total spend."
+              value={formatCurrency(metrics.totalNetProfit)}
+              delta={metrics.totalNetProfitDelta}
+              values={metrics.profitSparkline}
               comparison="vs May 9 – May 15"
             />
             <MetricCard

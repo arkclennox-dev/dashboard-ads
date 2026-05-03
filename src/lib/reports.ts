@@ -24,14 +24,14 @@ export interface OverviewMetrics {
   clicksDelta: number;
   cpc: number;
   cpcDelta: number;
-  ctr: number;
-  ctrDelta: number;
+  totalNetProfit: number;
+  totalNetProfitDelta: number;
+  profitSparkline: number[];
   conversionRate: number;
   conversionRateDelta: number;
   spendSparkline: number[];
   clicksSparkline: number[];
   cpcSparkline: number[];
-  ctrSparkline: number[];
   conversionRateSparkline: number[];
 }
 
@@ -220,6 +220,7 @@ export async function buildOverviewMetrics(): Promise<OverviewMetrics> {
 
   const sumClicks = (arr: DailyPoint[]) => arr.reduce((s, p) => s + p.clicks, 0);
   const sumSpend = (arr: DailyPoint[]) => arr.reduce((s, p) => s + p.spend, 0);
+  const sumKomisi = (arr: DailyPoint[]) => arr.reduce((s, p) => s + p.komisi, 0);
 
   const clicks = sumClicks(recent);
   const spend = sumSpend(recent);
@@ -229,14 +230,28 @@ export async function buildOverviewMetrics(): Promise<OverviewMetrics> {
   const cpc = clicks ? spend / clicks : 0;
   const prevCpc = prevClicks ? prevSpend / prevClicks : 0;
 
-  const totalImpressions = source.adSpend
-    .filter((a) => recent.some((d) => d.date === a.report_date))
-    .reduce((s, r) => s + Number(r.impressions ?? 0), 0);
-  const ctr = totalImpressions ? (clicks / totalImpressions) * 100 : 0;
-  const prevImpressions = source.adSpend
-    .filter((a) => previous.some((d) => d.date === a.report_date))
-    .reduce((s, r) => s + Number(r.impressions ?? 0), 0);
-  const prevCtr = prevImpressions ? (prevClicks / prevImpressions) * 100 : 0;
+  // All-time net profit: sum(komisi) - sum(spend) across all records
+  let allTimeKomisi = 0;
+  let allTimeSpend = 0;
+  if (isDemoMode) {
+    allTimeKomisi = source.commissions.reduce((s, c) => s + Number(c.komisi ?? 0), 0);
+    allTimeSpend = source.adSpend.reduce((s, a) => s + Number(a.spend ?? 0), 0);
+  } else {
+    const supabase = getSupabaseServiceRole();
+    if (supabase) {
+      const [komisiRes, spendRes] = await Promise.all([
+        supabase.from("commission_reports").select("komisi"),
+        supabase.from("ad_spend_reports").select("spend"),
+      ]);
+      allTimeKomisi = (komisiRes.data ?? []).reduce((s, r) => s + Number(r.komisi ?? 0), 0);
+      allTimeSpend = (spendRes.data ?? []).reduce((s, r) => s + Number(r.spend ?? 0), 0);
+    }
+  }
+  const totalNetProfit = allTimeKomisi - allTimeSpend;
+
+  // Recent vs previous 7-day profit for delta
+  const recentProfit = sumKomisi(recent) - sumSpend(recent);
+  const prevProfit = sumKomisi(previous) - sumSpend(previous);
 
   // Conversion rate from commission data: pesanan / klik
   const recentCommissions = source.commissions.filter((c) =>
@@ -261,14 +276,14 @@ export async function buildOverviewMetrics(): Promise<OverviewMetrics> {
     clicksDelta: pct(clicks, prevClicks),
     cpc,
     cpcDelta: pct(cpc, prevCpc),
-    ctr,
-    ctrDelta: pct(ctr, prevCtr),
+    totalNetProfit,
+    totalNetProfitDelta: pct(recentProfit, prevProfit),
+    profitSparkline: recent.map((p) => p.komisi - p.spend),
     conversionRate,
     conversionRateDelta: pct(conversionRate, prevConversionRate),
     spendSparkline: recent.map((p) => p.spend),
     clicksSparkline: recent.map((p) => p.clicks),
     cpcSparkline: recent.map((p) => (p.clicks ? p.spend / p.clicks : 0)),
-    ctrSparkline: recent.map((p) => p.clicks * 0.003 + 1.4),
     conversionRateSparkline: recentCommissions.length > 0
       ? recent.map((d) => {
           const c = recentCommissions.find((r) => r.report_date === d.date);
