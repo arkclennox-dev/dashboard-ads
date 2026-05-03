@@ -2,7 +2,7 @@ import { DashboardClient } from "@/components/dashboard-client";
 import { RedirectLinkBuilder } from "@/components/redirect-link-builder";
 import { Topbar } from "@/components/topbar";
 import { listProducts } from "@/lib/data/products";
-import { env } from "@/lib/env";
+import { getEffectiveSiteUrl } from "@/lib/data/settings";
 import { buildAdSetRows, buildDailySeries, buildOverviewMetrics } from "@/lib/reports";
 
 export const dynamic = "force-dynamic";
@@ -30,11 +30,12 @@ export default async function AdminOverviewPage({
   const from = searchParams.from ?? defaultFrom();
   const to = searchParams.to ?? defaultTo();
 
+  const siteUrl = await getEffectiveSiteUrl();
   const [rows, metrics, series, productsResult] = await Promise.all([
     buildAdSetRows(from, to),
     buildOverviewMetrics(from, to),
     buildDailySeries(from, to),
-    listProducts({ page: 1, pageSize: 100 }, env.siteUrl),
+    listProducts({ page: 1, pageSize: 100 }, siteUrl),
   ]);
   const labels = series.map((p) => dayLabel(p.date));
 
@@ -64,7 +65,7 @@ export default async function AdminOverviewPage({
               destination_url: p.destination_url,
               short_code: p.short_code,
             }))}
-            siteUrl={env.siteUrl}
+            siteUrl={siteUrl}
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { isDemoMode } from "@/lib/env";
+import { isDemoMode, env } from "@/lib/env";
 import { getDemoStore } from "@/lib/demo-store";
 import { getSupabaseServiceRole } from "@/lib/supabase/server";
 import type { SiteSettings } from "@/lib/types";
@@ -42,4 +42,9 @@ export async function updateSettings(patch: Partial<SiteSettings>): Promise<Site
     .select("*")
     .maybeSingle();
   return (data as SiteSettings | null) ?? null;
+}
+
+export async function getEffectiveSiteUrl(): Promise<string> {
+  const settings = await getSettings();
+  return settings?.site_url?.trim().replace(/\/$/, "") || env.siteUrl.replace(/\/$/, "");
 }

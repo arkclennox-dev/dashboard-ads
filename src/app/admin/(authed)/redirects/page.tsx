@@ -4,14 +4,15 @@ import { RedirectLinkBuilder } from "@/components/redirect-link-builder";
 import { RedirectsTable } from "@/components/redirects-table";
 import { listProducts } from "@/lib/data/products";
 import { getRedirectClickStats } from "@/lib/data/clicks";
-import { env } from "@/lib/env";
+import { getEffectiveSiteUrl } from "@/lib/data/settings";
 import { formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminRedirectsPage() {
+  const siteUrl = await getEffectiveSiteUrl();
   const [{ items }, stats] = await Promise.all([
-    listProducts({ page: 1, pageSize: 100 }, env.siteUrl),
+    listProducts({ page: 1, pageSize: 100 }, siteUrl),
     getRedirectClickStats(),
   ]);
 
@@ -71,7 +72,7 @@ export default async function AdminRedirectsPage() {
             destination_url: p.destination_url,
             short_code: p.short_code,
           }))}
-          siteUrl={env.siteUrl}
+          siteUrl={siteUrl}
         />
       </div>
     </PageShell>

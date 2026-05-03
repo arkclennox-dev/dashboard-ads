@@ -1,12 +1,13 @@
 import { PageShell } from "@/components/page-shell";
 import { listProducts } from "@/lib/data/products";
-import { env } from "@/lib/env";
+import { getEffectiveSiteUrl } from "@/lib/data/settings";
 import { LandingPageForm } from "./landing-page-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewLandingPagePage() {
-  const { items } = await listProducts({ page: 1, pageSize: 200 }, env.siteUrl);
+  const siteUrl = await getEffectiveSiteUrl();
+  const { items } = await listProducts({ page: 1, pageSize: 200 }, siteUrl);
   return (
     <PageShell
       title="New landing page"
