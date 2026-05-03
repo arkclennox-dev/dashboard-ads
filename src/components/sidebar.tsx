@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 import {
   IconBook,
   IconBranch,
   IconChart,
-  IconChevronDown,
   IconGrid,
   IconLayers,
   IconLink,
@@ -79,7 +80,28 @@ function NavLink({ item }: { item: NavItem }) {
   );
 }
 
+function useCurrentUser() {
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null);
+    });
+  }, []);
+
+  const initials = email
+    ? email.slice(0, 2).toUpperCase()
+    : "??";
+
+  const displayName = email ?? "—";
+
+  return { email, initials, displayName };
+}
+
 export function Sidebar() {
+  const { initials, displayName } = useCurrentUser();
   return (
     <aside className="hidden lg:flex flex-col w-[240px] shrink-0 border-r border-border bg-surface px-4 py-5">
       <Link href="/admin" className="flex items-center gap-2 px-2 pb-6">
@@ -111,14 +133,13 @@ export function Sidebar() {
 
       <div className="mt-auto rounded-xl border border-border bg-surface-2 p-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-sm font-semibold text-white">
-            AC
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-sm font-semibold text-white">
+            {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">Acme Marketing</div>
-            <div className="text-xs text-muted">Ad Account</div>
+            <div className="truncate text-sm font-semibold">{displayName}</div>
+            <div className="text-xs text-muted">Admin</div>
           </div>
-          <IconChevronDown className="text-muted" />
         </div>
         <a
           href="/api/auth/signout"
