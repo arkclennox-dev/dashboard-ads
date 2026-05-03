@@ -280,7 +280,7 @@ export default function PanduanPage() {
           </p>
           <p>
             Dokumentasi lengkap endpoint tersedia di{" "}
-            <a href="/admin/api-docs" className="text-brand-300 hover:underline">
+            <a href="/api-docs" className="text-brand-300 hover:underline">
               /admin/api-docs
             </a>
             {" "}(dapat diakses tanpa login).
