@@ -35,6 +35,7 @@ const secondary: NavItem[] = [
   { href: "/admin/clicks", label: "Klik", icon: IconTag },
   { href: "/admin/reports", label: "Laporan", icon: IconChart },
   { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch },
+  { href: "/admin/meta-accounts", label: "Akun Meta", icon: IconMegaphone },
   { href: "/admin/komisi", label: "Komisi", icon: IconTag },
 ];
 

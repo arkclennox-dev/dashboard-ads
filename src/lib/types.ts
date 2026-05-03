@@ -115,6 +115,16 @@ export interface CommissionReport {
   updated_at: string;
 }
 
+export interface MetaAdAccount {
+  id: string;
+  name: string;
+  ad_account_id: string;
+  access_token: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiKeyMeta {
   id: string;
   name: string;

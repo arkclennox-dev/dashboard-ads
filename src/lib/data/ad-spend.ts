@@ -125,6 +125,7 @@ export async function createAdSpend(args: CreateAdSpendArgs): Promise<AdSpendRep
 export interface SyncMetaAdSpendArgs {
   since: string;
   until: string;
+  meta_account_id: string;
   rows: {
     report_date: string;
     campaign_name: string;
@@ -141,11 +142,12 @@ export async function syncMetaAdSpend(args: SyncMetaAdSpendArgs): Promise<number
   const supabase = getSupabaseServiceRole();
   if (!supabase) throw new Error("Supabase not configured");
 
-  // Delete existing meta records for the date range before re-inserting
+  // Delete existing records for this specific account + date range only
   const { error: delError } = await supabase
     .from("ad_spend_reports")
     .delete()
     .eq("platform", "meta")
+    .eq("meta_account_id", args.meta_account_id)
     .gte("report_date", args.since)
     .lte("report_date", args.until);
   if (delError) throw delError;
@@ -157,6 +159,7 @@ export async function syncMetaAdSpend(args: SyncMetaAdSpendArgs): Promise<number
     args.rows.map((r) => ({
       report_date: r.report_date,
       platform: "meta",
+      meta_account_id: args.meta_account_id,
       campaign_name: r.campaign_name,
       adset_name: r.adset_name,
       ad_name: r.ad_name,
