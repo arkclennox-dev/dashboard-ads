@@ -72,8 +72,6 @@ export default async function AdminOverviewPage() {
             </button>
           </div>
 
-          <AdSetsTable rows={rows} total={Math.max(rows.length, 12)} />
-
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <MetricCard
               label="Spend"
@@ -123,6 +121,8 @@ export default async function AdminOverviewPage() {
             clicks={series.map((p) => p.clicks)}
             labels={labels}
           />
+
+          <AdSetsTable rows={rows} total={Math.max(rows.length, 12)} />
         </div>
 
         <div className="xl:sticky xl:top-6">
