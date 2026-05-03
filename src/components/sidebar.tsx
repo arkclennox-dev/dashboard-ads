@@ -26,7 +26,6 @@ interface NavItem {
 
 const primary: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: IconGrid },
-  { href: "/admin/products", label: "Produk", icon: IconMegaphone },
   { href: "/admin/landing-pages", label: "Landing Page", icon: IconLayers },
   { href: "/admin/redirects", label: "Redirect Builder", icon: IconLink },
 ];
