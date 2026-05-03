@@ -1,29 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   IconChevronDown,
   IconCopy,
   IconLink,
-  IconPlus,
 } from "./icons";
 
 const inputCls =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand";
 
-function slugifyTitle(s: string): string {
-  return (
-    s
-      .toLowerCase()
-      .trim()
-      .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 80) || Math.random().toString(36).slice(2, 8)
-  );
-}
 
 function deriveOrigin(siteUrl: string): string {
   const trimmed = siteUrl.trim().replace(/\/$/, "");
@@ -62,17 +49,6 @@ export function RedirectLinkBuilder({
   const host = deriveHost(origin || "https://example.com");
 
   const [products, setProducts] = useState(initProducts);
-  const [mode, setMode] = useState<"create" | "build">(
-    initProducts.length === 0 ? "create" : "build",
-  );
-
-  // Create form
-  const [destUrl, setDestUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [customLink, setCustomLink] = useState("");
-  const [notes, setNotes] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
 
   // Build / UTM
   const [productId, setProductId] = useState(initProducts[0]?.id ?? "");
@@ -98,55 +74,6 @@ export function RedirectLinkBuilder({
     const t = setTimeout(() => setCopied(false), 1600);
     return () => clearTimeout(t);
   }, [copied]);
-
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
-    setCreateError(null);
-    setCreating(true);
-    try {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          title,
-          slug: slugifyTitle(title),
-          short_code: customLink || undefined,
-          destination_url: destUrl,
-          notes: notes || null,
-          status: "active",
-        }),
-      });
-      const json = (await res.json()) as
-        | { success: true; data: RedirectBuilderProduct & { short_code?: string | null } }
-        | { success: false; error: { message: string } };
-      if (!res.ok || !json.success) {
-        throw new Error(
-          "error" in json && json.error?.message
-            ? json.error.message
-            : `HTTP ${res.status}`,
-        );
-      }
-      const newProduct: RedirectBuilderProduct = {
-        id: json.data.id,
-        slug: json.data.slug,
-        title: json.data.title,
-        destination_url: json.data.destination_url,
-        short_code: json.data.short_code,
-      };
-      setProducts((prev) => [...prev, newProduct]);
-      setProductId(newProduct.id);
-      setMode("build");
-      setDestUrl("");
-      setTitle("");
-      setCustomLink("");
-      setNotes("");
-      router.refresh();
-    } catch (err) {
-      setCreateError((err as Error).message);
-    } finally {
-      setCreating(false);
-    }
-  }
 
   const selectedProduct = useMemo(
     () => products.find((p) => p.id === productId) ?? null,
@@ -206,119 +133,9 @@ export function RedirectLinkBuilder({
           <IconLink className="text-brand-300" />
           <span className="text-sm font-semibold">Redirect Link Builder</span>
         </div>
-        {mode === "build" && (
-          <button
-            type="button"
-            onClick={() => setMode("create")}
-            className="flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink-2 hover:bg-surface-3"
-          >
-            <IconPlus width={13} height={13} /> Produk baru
-          </button>
-        )}
       </div>
 
-      {mode === "create" ? (
-        <form onSubmit={handleCreate} className="space-y-3">
-          <p className="text-xs text-muted">
-            Buat link Shopee yang bisa di-track oleh dashboard ini.
-          </p>
-
-          <label className="block">
-            <div className="mb-1.5 text-xs font-medium text-ink-2">
-              Link Shopee Affiliate <span className="text-danger">*</span>
-            </div>
-            <input
-              type="url"
-              required
-              value={destUrl}
-              onChange={(e) => setDestUrl(e.target.value)}
-              placeholder="https://s.shopee.co.id/xxxxx"
-              className={inputCls}
-            />
-          </label>
-
-          <label className="block">
-            <div className="mb-1.5 text-xs font-medium text-ink-2">
-              Nama Produk <span className="text-danger">*</span>
-            </div>
-            <input
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Sepatu Nike Air Max"
-              className={inputCls}
-            />
-          </label>
-
-          <label className="block">
-            <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-ink-2">
-              Custom Link{" "}
-              <span className="font-normal text-muted">(opsional)</span>
-            </div>
-            <div className="flex items-center rounded-lg border border-border bg-surface focus-within:border-brand focus-within:ring-1 focus-within:ring-brand">
-              <span className="select-none border-r border-border px-2.5 py-2 text-xs text-muted">
-                {host}/
-              </span>
-              <input
-                value={customLink}
-                onChange={(e) =>
-                  setCustomLink(
-                    e.target.value
-                      .toLowerCase()
-                      .replace(/[^a-z0-9_-]/g, "")
-                      .slice(0, 40),
-                  )
-                }
-                placeholder="abc123"
-                className="flex-1 bg-transparent px-3 py-2 text-sm text-ink placeholder:text-muted-2 focus:outline-none"
-              />
-            </div>
-            <p className="mt-1 text-[11px] text-muted">
-              Dibuat otomatis jika dikosongkan.
-            </p>
-          </label>
-
-          <label className="block">
-            <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-ink-2">
-              Keterangan{" "}
-              <span className="font-normal text-muted">(opsional)</span>
-            </div>
-            <textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Catatan untuk produk ini..."
-              className={`${inputCls} resize-none`}
-            />
-          </label>
-
-          {createError && (
-            <div className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger">
-              {createError}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              type="submit"
-              disabled={creating}
-              className="flex-1 rounded-lg bg-brand py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-600 disabled:opacity-60"
-            >
-              {creating ? "Menyimpan…" : "Simpan & Buat Link"}
-            </button>
-            {products.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setMode("build")}
-                className="rounded-lg border border-border px-3 py-2.5 text-sm text-ink-2 hover:bg-surface-3"
-              >
-                Batal
-              </button>
-            )}
-          </div>
-        </form>
-      ) : (
-        <div className="space-y-3">
+      <div className="space-y-3">
           <label className="block">
             <div className="mb-1.5 text-xs font-medium text-ink-2">Produk</div>
             <div className="relative">
@@ -503,7 +320,6 @@ export function RedirectLinkBuilder({
             )}
           </div>
         </div>
-      )}
     </div>
   );
 }
