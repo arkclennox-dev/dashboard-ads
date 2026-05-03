@@ -3,6 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+interface AccountResult {
+  account: string;
+  ad_account_id: string;
+  synced: number;
+  error?: string;
+}
+
+interface SyncResult {
+  since: string;
+  until: string;
+  total_synced: number;
+  accounts: AccountResult[];
+}
+
 function defaultSince() {
   const d = new Date();
   d.setDate(d.getDate() - 7);
@@ -18,9 +32,7 @@ export function MetaSync() {
   const [since, setSince] = useState(defaultSince);
   const [until, setUntil] = useState(defaultUntil);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ synced: number; since: string; until: string } | null>(
-    null,
-  );
+  const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSync() {
@@ -45,6 +57,8 @@ export function MetaSync() {
       setLoading(false);
     }
   }
+
+  const hasErrors = result?.accounts.some((a) => a.error);
 
   return (
     <div className="space-y-3">
@@ -85,9 +99,23 @@ export function MetaSync() {
       </div>
 
       {result && (
-        <div className="rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-xs text-success">
-          Berhasil menyinkronkan <strong>{result.synced}</strong> baris untuk periode{" "}
-          {result.since} s/d {result.until}.
+        <div className={`rounded-lg border px-3 py-2.5 text-xs space-y-2 ${hasErrors ? "border-warning/40 bg-warning/10" : "border-success/40 bg-success/10"}`}>
+          <p className={hasErrors ? "text-warning" : "text-success"}>
+            Selesai sync periode <strong>{result.since}</strong> s/d <strong>{result.until}</strong>.
+            Total <strong>{result.total_synced}</strong> baris berhasil.
+          </p>
+          {result.accounts.map((a) => (
+            <div key={a.ad_account_id} className="flex items-start gap-2">
+              <span className={`shrink-0 font-medium ${a.error ? "text-danger" : "text-ink-2"}`}>
+                {a.account}
+              </span>
+              {a.error ? (
+                <span className="text-danger">— Error: {a.error}</span>
+              ) : (
+                <span className="text-ink-2">— {a.synced} baris</span>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
