@@ -83,7 +83,7 @@ export default async function AdminOverviewPage() {
             />
             <MetricCard
               label="Clicks"
-              hint="Total clicks tracked via /[slug]."
+              hint="Total link clicks dari Meta Ads (link_clicks di ad_spend_reports)."
               value={formatNumber(metrics.clicks)}
               delta={metrics.clicksDelta}
               values={metrics.clicksSparkline}
@@ -91,7 +91,7 @@ export default async function AdminOverviewPage() {
             />
             <MetricCard
               label="CPC"
-              hint="Spend ÷ clicks."
+              hint="Spend ÷ Meta link clicks."
               value={formatCurrency(metrics.cpc)}
               delta={metrics.cpcDelta}
               values={metrics.cpcSparkline}

@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
 import { listLandingPages } from "@/lib/data/landing-pages";
-import { formatDate } from "@/lib/format";
+import { getLandingPageVisits } from "@/lib/data/clicks";
+import { formatDate, formatNumber } from "@/lib/format";
 import { LandingPageRowActions } from "./row-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLandingPagesPage() {
-  const { items, total } = await listLandingPages({ page: 1, pageSize: 50 });
+  const [{ items, total }, visits] = await Promise.all([
+    listLandingPages({ page: 1, pageSize: 50 }),
+    getLandingPageVisits(),
+  ]);
   return (
     <PageShell
       title="Landing pages"
@@ -35,6 +39,7 @@ export default async function AdminLandingPagesPage() {
                 <th>Title</th>
                 <th>Slug</th>
                 <th>Status</th>
+                <th>Kunjungan</th>
                 <th>Created At</th>
                 <th>Public URL</th>
                 <th className="text-right">Actions</th>
@@ -43,7 +48,7 @@ export default async function AdminLandingPagesPage() {
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted">
+                  <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted">
                     No landing pages yet.{" "}
                     <Link
                       href="/admin/landing-pages/new"
@@ -75,6 +80,7 @@ export default async function AdminLandingPagesPage() {
                         {p.status}
                       </span>
                     </td>
+                    <td className="text-ink-2">{formatNumber(visits[p.slug] ?? 0)}</td>
                     <td className="text-ink-2">{formatDate(p.created_at)}</td>
                     <td>
                       <a

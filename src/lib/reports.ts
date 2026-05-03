@@ -1,7 +1,7 @@
 import { isDemoMode } from "./env";
 import { getDemoStore } from "./demo-store";
 import { getSupabaseServiceRole } from "./supabase/server";
-import type { AdSpendReport, AffiliateProduct, ClickEvent, CommissionReport } from "./types";
+import type { AdSpendReport, AffiliateProduct, CommissionReport } from "./types";
 
 export interface AdSetRow {
   id: string;
@@ -55,7 +55,6 @@ function statusFromProduct(p: AffiliateProduct): AdSetRow["status"] {
 
 interface ReportSource {
   products: AffiliateProduct[];
-  clicks: ClickEvent[];
   adSpend: AdSpendReport[];
   commissions: CommissionReport[];
 }
@@ -65,28 +64,20 @@ async function loadReportSource(): Promise<ReportSource> {
     const store = getDemoStore();
     return {
       products: store.products,
-      clicks: store.clicks,
       adSpend: store.adSpend,
       commissions: store.commissions,
     };
   }
   const supabase = getSupabaseServiceRole();
   if (!supabase) {
-    return { products: [], clicks: [], adSpend: [], commissions: [] };
+    return { products: [], adSpend: [], commissions: [] };
   }
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
-  const cutoffIso = cutoff.toISOString();
-  const cutoffDate = cutoffIso.slice(0, 10);
+  const cutoffDate = cutoff.toISOString().slice(0, 10);
 
-  const [productsRes, clicksRes, adSpendRes, commissionsRes] = await Promise.all([
+  const [productsRes, adSpendRes, commissionsRes] = await Promise.all([
     supabase.from("affiliate_products").select("*"),
-    supabase
-      .from("click_events")
-      .select("*")
-      .gt("created_at", cutoffIso)
-      .order("created_at", { ascending: false })
-      .limit(5000),
     supabase
       .from("ad_spend_reports")
       .select("*")
@@ -103,7 +94,6 @@ async function loadReportSource(): Promise<ReportSource> {
 
   return {
     products: (productsRes.data ?? []) as AffiliateProduct[],
-    clicks: (clicksRes.data ?? []) as ClickEvent[],
     adSpend: (adSpendRes.data ?? []) as AdSpendReport[],
     commissions: (commissionsRes.data ?? []) as CommissionReport[],
   };
@@ -186,14 +176,13 @@ function buildDailySeriesFromSource(source: ReportSource, days: number): DailyPo
     d.setDate(today.getDate() - i);
     buckets.set(d.toISOString().slice(0, 10), { clicks: 0, spend: 0, komisi: 0 });
   }
-  source.clicks.forEach((c) => {
-    const key = dayKey(c.created_at);
-    const bucket = buckets.get(key);
-    if (bucket) bucket.clicks++;
-  });
+  // clicks = Meta link_clicks from ad_spend_reports (not internal redirect clicks)
   source.adSpend.forEach((a) => {
     const bucket = buckets.get(a.report_date);
-    if (bucket) bucket.spend += Number(a.spend ?? 0);
+    if (bucket) {
+      bucket.spend += Number(a.spend ?? 0);
+      bucket.clicks += Number(a.link_clicks ?? 0);
+    }
   });
   source.commissions.forEach((c) => {
     const bucket = buckets.get(c.report_date);

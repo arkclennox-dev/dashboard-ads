@@ -167,3 +167,103 @@ export async function listClicks(args: ListClicksArgs): Promise<ListClicksResult
   const { data, count } = await query.range(from, to);
   return { items: (data ?? []) as ClickEvent[], total: count ?? (data?.length ?? 0) };
 }
+
+export interface RedirectClickStats {
+  total: number;
+  last7days: number;
+  daily: { date: string; clicks: number }[];
+}
+
+export async function getRedirectClickStats(): Promise<RedirectClickStats> {
+  const days = 14;
+  const buckets = new Map<string, number>();
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    buckets.set(d.toISOString().slice(0, 10), 0);
+  }
+  const cutoff7 = new Date(today);
+  cutoff7.setDate(today.getDate() - 7);
+
+  if (isDemoMode) {
+    const store = getDemoStore();
+    const real = store.clicks.filter((c) => !c.is_bot && !c.is_duplicate);
+    real.forEach((c) => {
+      const key = c.created_at.slice(0, 10);
+      if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+    });
+    const last7 = real.filter((c) => c.created_at >= cutoff7.toISOString()).length;
+    return {
+      total: real.length,
+      last7days: last7,
+      daily: Array.from(buckets.entries()).map(([date, clicks]) => ({ date, clicks })),
+    };
+  }
+
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) return { total: 0, last7days: 0, daily: [] };
+
+  const cutoff14Iso = new Date(today.setDate(today.getDate() - days + 1))
+    .toISOString()
+    .slice(0, 10);
+
+  const [totalRes, last7Res, dailyRes] = await Promise.all([
+    supabase
+      .from("click_events")
+      .select("id", { count: "exact", head: true })
+      .eq("is_bot", false)
+      .eq("is_duplicate", false),
+    supabase
+      .from("click_events")
+      .select("id", { count: "exact", head: true })
+      .eq("is_bot", false)
+      .eq("is_duplicate", false)
+      .gte("created_at", cutoff7.toISOString()),
+    supabase
+      .from("click_events")
+      .select("created_at")
+      .eq("is_bot", false)
+      .eq("is_duplicate", false)
+      .gte("created_at", cutoff14Iso),
+  ]);
+
+  (dailyRes.data ?? []).forEach((row: { created_at: string }) => {
+    const key = row.created_at.slice(0, 10);
+    if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
+  });
+
+  return {
+    total: totalRes.count ?? 0,
+    last7days: last7Res.count ?? 0,
+    daily: Array.from(buckets.entries()).map(([date, clicks]) => ({ date, clicks })),
+  };
+}
+
+export async function getLandingPageVisits(): Promise<Record<string, number>> {
+  if (isDemoMode) {
+    const store = getDemoStore();
+    const result: Record<string, number> = {};
+    store.clicks
+      .filter((c) => !c.is_bot && c.landing_page_slug)
+      .forEach((c) => {
+        const slug = c.landing_page_slug!;
+        result[slug] = (result[slug] ?? 0) + 1;
+      });
+    return result;
+  }
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) return {};
+  const { data } = await supabase
+    .from("click_events")
+    .select("landing_page_slug")
+    .eq("is_bot", false)
+    .not("landing_page_slug", "is", null);
+  const result: Record<string, number> = {};
+  (data ?? []).forEach((row: { landing_page_slug: string | null }) => {
+    if (row.landing_page_slug) {
+      result[row.landing_page_slug] = (result[row.landing_page_slug] ?? 0) + 1;
+    }
+  });
+  return result;
+}
