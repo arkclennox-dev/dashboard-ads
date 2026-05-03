@@ -1,9 +1,10 @@
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("id-ID", {
+  const abs = new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(Math.abs(value));
+  return value < 0 ? `-${abs}` : abs;
 }
 
 export function formatNumber(value: number): string {

@@ -31,10 +31,10 @@ export function MetricCard({
           )}
         </div>
       </div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold tracking-tight">{value}</span>
+      <div className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="whitespace-nowrap text-2xl font-semibold tracking-tight">{value}</span>
         <span
-          className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
+          className={`inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold ${
             isPositive ? "text-success" : "text-danger"
           }`}
         >
