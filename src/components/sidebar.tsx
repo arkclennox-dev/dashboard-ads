@@ -11,6 +11,7 @@ import {
   IconGrid,
   IconLayers,
   IconLink,
+  IconLock,
   IconLogo,
   IconMegaphone,
   IconPlug,
@@ -22,7 +23,8 @@ interface NavItem {
   href: string;
   label: string;
   icon: typeof IconGrid;
-  badge?: number;
+  adminOnly?: boolean;
+  hidden?: boolean;
 }
 
 const primary: NavItem[] = [
@@ -32,23 +34,40 @@ const primary: NavItem[] = [
 ];
 
 const secondary: NavItem[] = [
-  { href: "/admin/dashboard-ads", label: "Dashboard Ads", icon: IconGrid },
-  { href: "/admin/reports", label: "Laporan", icon: IconChart },
-  { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch },
-  { href: "/admin/meta-accounts", label: "Akun Meta", icon: IconMegaphone },
-  { href: "/admin/komisi", label: "Komisi", icon: IconTag },
+  { href: "/admin/dashboard-ads", label: "Dashboard Ads", icon: IconGrid, adminOnly: true },
+  { href: "/admin/reports", label: "Laporan", icon: IconChart, adminOnly: true },
+  { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch, adminOnly: true },
+  { href: "/admin/meta-accounts", label: "Akun Meta", icon: IconMegaphone, adminOnly: true },
+  { href: "/admin/komisi", label: "Komisi", icon: IconTag, adminOnly: true },
 ];
 
 const tertiary: NavItem[] = [
-  { href: "/admin/api-keys", label: "API Keys", icon: IconPlug },
-  { href: "/admin/settings", label: "Pengaturan", icon: IconSettings },
+  { href: "/admin/api-keys", label: "API Keys", icon: IconPlug, adminOnly: true },
+  { href: "/admin/settings", label: "Pengaturan", icon: IconSettings, adminOnly: true, hidden: true },
   { href: "/admin/panduan", label: "Panduan", icon: IconBook },
 ];
 
-function NavLink({ item }: { item: NavItem }) {
+function NavLink({ item, isAdmin }: { item: NavItem; isAdmin: boolean }) {
   const pathname = usePathname() ?? "";
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const locked = item.adminOnly && !isAdmin;
   const Icon = item.icon;
+
+  if (locked) {
+    return (
+      <div
+        className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium cursor-not-allowed opacity-40 select-none"
+        title="Fitur ini tersedia untuk admin"
+      >
+        <span className="flex items-center gap-3 text-ink-2">
+          <Icon className="text-muted" />
+          <span>{item.label}</span>
+        </span>
+        <IconLock className="text-muted" width={14} height={14} />
+      </div>
+    );
+  }
+
   return (
     <Link
       href={item.href}
@@ -63,52 +82,54 @@ function NavLink({ item }: { item: NavItem }) {
         <Icon className={active ? "text-white" : "text-muted"} />
         <span>{item.label}</span>
       </span>
-      {item.badge != null && (
-        <span
-          className={[
-            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-            active ? "bg-white/15 text-white" : "bg-brand/15 text-brand-300",
-          ].join(" ")}
-        >
-          {item.badge}
-        </span>
-      )}
     </Link>
   );
 }
 
 function useCurrentUser() {
   const [email, setEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
+    supabase.auth.getUser().then(async ({ data }) => {
+      const userEmail = data.user?.email ?? null;
+      setEmail(userEmail);
+      if (data.user) {
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("is_admin")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+        setIsAdmin(tenant?.is_admin === true);
+      }
     });
   }, []);
 
-  const initials = email
-    ? email.slice(0, 2).toUpperCase()
-    : "??";
-
+  const initials = email ? email.slice(0, 2).toUpperCase() : "??";
   const displayName = email ?? "—";
 
-  return { email, initials, displayName };
+  return { email, initials, displayName, isAdmin };
 }
 
 export function Sidebar() {
-  const { initials, displayName } = useCurrentUser();
+  const { initials, displayName, isAdmin } = useCurrentUser();
+
+  const visibleTertiary = tertiary.filter(
+    (item) => !(item.hidden && item.adminOnly && !isAdmin)
+  );
+
   return (
     <aside className="hidden lg:flex flex-col w-[240px] shrink-0 border-r border-border bg-surface px-4 py-5">
-      <Link href="/admin" className="flex items-center gap-2 px-2 pb-6">
+      <Link href="/admin/redirects" className="flex items-center gap-2 px-2 pb-6">
         <IconLogo />
-        <span className="text-base font-semibold tracking-tight">Meta Ads</span>
+        <span className="text-base font-semibold tracking-tight">AdsLink</span>
       </Link>
 
       <nav className="flex flex-col gap-1">
         {primary.map((item) => (
-          <NavLink key={item.href} item={item} />
+          <NavLink key={item.href} item={item} isAdmin={isAdmin} />
         ))}
       </nav>
 
@@ -116,15 +137,15 @@ export function Sidebar() {
 
       <nav className="flex flex-col gap-1">
         {secondary.map((item) => (
-          <NavLink key={item.href} item={item} />
+          <NavLink key={item.href} item={item} isAdmin={isAdmin} />
         ))}
       </nav>
 
       <div className="my-4 h-px bg-border" />
 
       <nav className="flex flex-col gap-1">
-        {tertiary.map((item) => (
-          <NavLink key={item.href} item={item} />
+        {visibleTertiary.map((item) => (
+          <NavLink key={item.href} item={item} isAdmin={isAdmin} />
         ))}
       </nav>
 
@@ -135,7 +156,7 @@ export function Sidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{displayName}</div>
-            <div className="text-xs text-muted">Admin</div>
+            <div className="text-xs text-muted">{isAdmin ? "Admin" : "Member"}</div>
           </div>
         </div>
         <a
