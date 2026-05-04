@@ -26,13 +26,13 @@ interface NavItem {
 }
 
 const primary: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: IconGrid },
+  { href: "/admin/redirects", label: "Dashboard Utama", icon: IconLink },
   { href: "/admin/landing-pages", label: "Landing Page", icon: IconLayers },
-  { href: "/admin/redirects", label: "Redirect Builder", icon: IconLink },
+  { href: "/admin/clicks", label: "Klik", icon: IconTag },
 ];
 
 const secondary: NavItem[] = [
-  { href: "/admin/clicks", label: "Klik", icon: IconTag },
+  { href: "/admin/dashboard-ads", label: "Dashboard Ads", icon: IconGrid },
   { href: "/admin/reports", label: "Laporan", icon: IconChart },
   { href: "/admin/ad-spend", label: "Biaya Iklan", icon: IconBranch },
   { href: "/admin/meta-accounts", label: "Akun Meta", icon: IconMegaphone },
@@ -47,10 +47,7 @@ const tertiary: NavItem[] = [
 
 function NavLink({ item }: { item: NavItem }) {
   const pathname = usePathname() ?? "";
-  const active =
-    item.href === "/admin"
-      ? pathname === "/admin"
-      : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
   const Icon = item.icon;
   return (
     <Link
