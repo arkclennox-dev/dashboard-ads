@@ -28,9 +28,9 @@ interface NavItem {
 }
 
 const primary: NavItem[] = [
-  { href: "/admin/redirects", label: "Dashboard Utama", icon: IconLink },
-  { href: "/admin/landing-pages", label: "Landing Page", icon: IconLayers },
-  { href: "/admin/clicks", label: "Klik", icon: IconTag },
+  { href: "/dashboard", label: "Dashboard", icon: IconLink },
+  { href: "/landing-pages", label: "Landing Page", icon: IconLayers },
+  { href: "/clicks", label: "Klik", icon: IconTag },
 ];
 
 const secondary: NavItem[] = [
@@ -44,7 +44,7 @@ const secondary: NavItem[] = [
 const tertiary: NavItem[] = [
   { href: "/admin/api-keys", label: "API Keys", icon: IconPlug, adminOnly: true },
   { href: "/admin/settings", label: "Pengaturan", icon: IconSettings, adminOnly: true, hidden: true },
-  { href: "/admin/panduan", label: "Panduan", icon: IconBook },
+  { href: "/panduan", label: "Panduan", icon: IconBook },
 ];
 
 function NavLink({ item, isAdmin }: { item: NavItem; isAdmin: boolean }) {
@@ -122,7 +122,7 @@ export function Sidebar() {
 
   return (
     <aside className="hidden lg:flex flex-col w-[240px] shrink-0 border-r border-border bg-surface px-4 py-5">
-      <Link href="/admin/redirects" className="flex items-center gap-2 px-2 pb-6">
+      <Link href="/dashboard" className="flex items-center gap-2 px-2 pb-6">
         <IconLogo />
         <span className="text-base font-semibold tracking-tight">AdsLink</span>
       </Link>
