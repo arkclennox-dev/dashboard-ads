@@ -3,6 +3,7 @@ import { isDemoMode } from "@/lib/env";
 import { getDemoStore } from "@/lib/demo-store";
 import { getSupabaseServer, getSupabaseServiceRole } from "@/lib/supabase/server";
 import { generateShortCode, isValidShortCode } from "@/lib/short-code";
+import { getTenantId } from "@/lib/data/tenants";
 import type { AffiliateProduct, ProductStatus } from "@/lib/types";
 
 export interface ProductWithStats extends AffiliateProduct {
@@ -82,10 +83,13 @@ export async function listProducts(
 
   const supabase = getSupabaseServiceRole();
   if (!supabase) return { items: [], total: 0 };
+  const tenantId = await getTenantId();
+  if (!tenantId) return { items: [], total: 0 };
   const sortColumn = args.sort === "total_clicks" ? "created_at" : (args.sort ?? "created_at");
   let query = supabase
     .from("affiliate_products")
     .select("*", { count: "exact" })
+    .eq("tenant_id", tenantId)
     .order(sortColumn, { ascending: (args.order ?? "desc") === "asc" });
   if (args.q) query = query.ilike("title", `%${args.q}%`);
   if (args.status) query = query.eq("status", args.status);
@@ -253,10 +257,13 @@ export async function createProduct(args: CreateProductArgs): Promise<AffiliateP
   }
   const supabase = getSupabaseServiceRole();
   if (!supabase) throw new Error("Supabase not configured");
+  const tenantId = await getTenantId();
+  if (!tenantId) throw Object.assign(new Error("Not authenticated"), { code: "UNAUTHORIZED" });
   const short_code = await resolveShortCode(args.short_code, supabase);
   const { data, error } = await supabase
     .from("affiliate_products")
     .insert({
+      tenant_id: tenantId,
       title: args.title,
       slug: args.slug,
       short_code,
@@ -288,10 +295,13 @@ export async function updateProduct(
   }
   const supabase = getSupabaseServiceRole();
   if (!supabase) return null;
+  const tenantId = await getTenantId();
+  if (!tenantId) return null;
   const { data } = await supabase
     .from("affiliate_products")
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq("id", id)
+    .eq("tenant_id", tenantId)
     .select("*")
     .maybeSingle();
   return (data as AffiliateProduct | null) ?? null;
@@ -312,13 +322,20 @@ export async function deleteProduct(id: string, hard = false): Promise<{ ok: boo
   }
   const supabase = getSupabaseServiceRole() ?? getSupabaseServer();
   if (!supabase) return { ok: false, error: "Database client unavailable" };
+  const tenantId = await getTenantId();
+  if (!tenantId) return { ok: false, error: "Not authenticated" };
   if (hard) {
-    const { error } = await supabase.from("affiliate_products").delete().eq("id", id);
+    const { error } = await supabase
+      .from("affiliate_products")
+      .delete()
+      .eq("id", id)
+      .eq("tenant_id", tenantId);
     return error ? { ok: false, error: error.message } : { ok: true };
   }
   const { error } = await supabase
     .from("affiliate_products")
     .update({ status: "inactive", updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("tenant_id", tenantId);
   return error ? { ok: false, error: error.message } : { ok: true };
 }

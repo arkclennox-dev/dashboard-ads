@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-const PUBLIC_ADMIN_PATHS = new Set<string>(["/admin/login"]);
+const PUBLIC_ADMIN_PATHS = new Set<string>(["/admin/login", "/admin/register"]);
 
 export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

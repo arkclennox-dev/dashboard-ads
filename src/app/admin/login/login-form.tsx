@@ -81,7 +81,15 @@ export function LoginForm() {
           {busy ? "Signing in…" : "Continue"}
         </button>
       </form>
-      {demoMode ? (
+      {!demoMode && (
+        <p className="mt-4 text-center text-xs text-muted">
+          Belum punya akun?{" "}
+          <Link href="/admin/register" className="text-brand-300 hover:underline">
+            Daftar gratis
+          </Link>
+        </p>
+      )}
+      {demoMode && (
         <p className="mt-6 text-xs text-muted">
           Demo build (no Supabase env): this form bypasses auth and goes
           straight to the{" "}
@@ -90,7 +98,7 @@ export function LoginForm() {
           </Link>
           .
         </p>
-      ) : null}
+      )}
     </>
   );
 }
