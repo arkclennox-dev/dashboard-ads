@@ -67,8 +67,7 @@ export async function POST(request: Request) {
   if (!parsed.ok) return parsed.response;
   try {
     const product = await createProduct(parsed.data);
-    revalidatePath("/admin");
-    revalidatePath("/admin/products");
+    revalidatePath("/dashboard");
     return created(product);
   } catch (err) {
     const code = (err as { code?: string }).code;

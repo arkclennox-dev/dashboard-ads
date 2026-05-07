@@ -38,8 +38,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (!parsed.ok) return parsed.response;
   const product = await updateProduct(params.id, parsed.data);
   if (!product) return errors.notFound("Product not found");
-  revalidatePath("/admin");
-  revalidatePath("/admin/products");
+  revalidatePath("/dashboard");
   return ok(product);
 }
 
@@ -50,7 +49,6 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const hard = url.searchParams.get("hard") === "true";
   const result = await deleteProduct(params.id, hard);
   if (!result.ok) return errors.server(result.error ?? "Delete failed");
-  revalidatePath("/admin");
-  revalidatePath("/admin/products");
+  revalidatePath("/dashboard");
   return ok({ id: params.id, deleted: true });
 }

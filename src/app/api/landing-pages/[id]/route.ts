@@ -10,7 +10,6 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   if (!auth.ok) return errors.unauthorized(auth.message);
   const deleted = await deleteLandingPage(params.id);
   if (!deleted) return errors.notFound("Landing page not found");
-  revalidatePath("/admin");
-  revalidatePath("/admin/landing-pages");
+  revalidatePath("/landing-pages");
   return ok({ id: params.id, deleted: true });
 }

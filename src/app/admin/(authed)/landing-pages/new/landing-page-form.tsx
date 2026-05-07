@@ -77,7 +77,7 @@ export function LandingPageForm({ products }: { products: ProductOption[] }) {
             : `HTTP ${res.status}`;
         throw new Error(text);
       }
-      router.push("/admin/landing-pages");
+      router.push("/landing-pages");
       router.refresh();
     } catch (err) {
       setError((err as Error).message);
@@ -191,7 +191,7 @@ export function LandingPageForm({ products }: { products: ProductOption[] }) {
         >
           {busy ? "Saving…" : "Save landing page"}
         </button>
-        <a href="/admin/landing-pages" className="text-sm text-muted hover:text-ink-2">
+        <a href="/landing-pages" className="text-sm text-muted hover:text-ink-2">
           Cancel
         </a>
       </div>
