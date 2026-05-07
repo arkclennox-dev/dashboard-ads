@@ -12,7 +12,18 @@ export interface ReportRow {
   cpcMasuk: number;
 }
 
-type SortKey = keyof ReportRow;
+type SortKey = keyof ReportRow | "efisiensi";
+
+function efisiensi(row: ReportRow): number | null {
+  if (row.klikMeta === 0 || row.klikMasuk === 0) return null;
+  return (row.klikMasuk / row.klikMeta) * 100;
+}
+
+function efisiensiColor(pct: number): string {
+  if (pct >= 80) return "bg-[#2aaa56]/15 text-[#2aaa56]";
+  if (pct >= 60) return "bg-warn/15 text-warn";
+  return "bg-danger/10 text-danger";
+}
 
 function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
   if (!active) return <span className="opacity-20">↕</span>;
@@ -89,7 +100,8 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
   }
 
   const sorted = [...rows].sort((a, b) => {
-    const av = a[sortKey], bv = b[sortKey];
+    const av = sortKey === "efisiensi" ? (efisiensi(a) ?? -1) : a[sortKey as keyof ReportRow];
+    const bv = sortKey === "efisiensi" ? (efisiensi(b) ?? -1) : b[sortKey as keyof ReportRow];
     const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number);
     return sortDir === "asc" ? cmp : -cmp;
   });
@@ -120,6 +132,7 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
             <th className="px-3 py-2.5 text-right whitespace-nowrap text-brand-300/80">
               Klik Masuk ✏
             </th>
+            <Th k="efisiensi" label="Efisiensi" right />
             <Th k="cpcMeta" label="CPC Meta" right />
             <Th k="cpcMasuk" label="CPC Masuk" right />
           </tr>
@@ -127,7 +140,7 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
         <tbody>
           {sorted.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted">
+              <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted">
                 Belum ada data. Upload ad spend report terlebih dahulu.
               </td>
             </tr>
@@ -145,6 +158,17 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
                 <td className="text-right">
                   <KlikMasukCell campaign={row.campaign} initial={row.klikMasuk} />
                 </td>
+                <td className="text-right">
+                  {(() => {
+                    const pct = efisiensi(row);
+                    if (pct === null) return <span className="text-muted">—</span>;
+                    return (
+                      <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${efisiensiColor(pct)}`}>
+                        {pct.toFixed(1)}%
+                      </span>
+                    );
+                  })()}
+                </td>
                 <td className="text-right text-ink-2">{formatCurrency(row.cpcMeta)}</td>
                 <td className="text-right text-ink-2">
                   {row.klikMasuk > 0 ? formatCurrency(row.cpcMasuk) : <span className="text-muted">—</span>}
@@ -159,6 +183,11 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
             <td className="text-right">{formatCurrency(totalSpend)}</td>
             <td className="text-right">{formatNumber(totalKlikMeta)}</td>
             <td className="text-right">{formatNumber(totalKlikMasuk)}</td>
+            <td className="text-right">
+              {totalKlikMeta > 0 && totalKlikMasuk > 0
+                ? `${((totalKlikMasuk / totalKlikMeta) * 100).toFixed(1)}%`
+                : "—"}
+            </td>
             <td className="text-right">{formatCurrency(totalKlikMeta > 0 ? totalSpend / totalKlikMeta : 0)}</td>
             <td className="text-right">{formatCurrency(totalKlikMasuk > 0 ? totalSpend / totalKlikMasuk : 0)}</td>
           </tr>
