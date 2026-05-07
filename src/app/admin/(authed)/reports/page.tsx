@@ -1,10 +1,10 @@
 import { PageShell } from "@/components/page-shell";
 import { listAdSpend } from "@/lib/data/ad-spend";
 import { listCommissions } from "@/lib/data/commissions";
-import { getTenantId } from "@/lib/data/tenants";
-import { getSupabaseServiceRole } from "@/lib/supabase/server";
+import { getShopeeClickSummaries } from "@/lib/data/shopee-clicks";
 import { formatCurrency } from "@/lib/format";
 import { ReportsTable, type ReportRow } from "./reports-table";
+import { ShopeeCsvImport } from "./shopee-csv-import";
 
 export const dynamic = "force-dynamic";
 
@@ -15,21 +15,10 @@ export default async function AdminReportsPage({
 }) {
   const { from, to } = searchParams;
 
-  const tenantId = await getTenantId();
-
-  const [{ items: spend }, { items: commissions }, klikMasukRows] = await Promise.all([
+  const [{ items: spend }, { items: commissions }, shopeeClicks] = await Promise.all([
     listAdSpend({ page: 1, pageSize: 10000, from, to }),
     listCommissions({ page: 1, pageSize: 10000, from, to }),
-    (async () => {
-      if (!tenantId) return [];
-      const sb = getSupabaseServiceRole();
-      if (!sb) return [];
-      const { data } = await sb
-        .from("campaign_klik_masuk")
-        .select("utm_campaign, klik_masuk")
-        .eq("tenant_id", tenantId);
-      return (data ?? []) as { utm_campaign: string; klik_masuk: number }[];
-    })(),
+    getShopeeClickSummaries(),
   ]);
 
   // Global totals
@@ -38,8 +27,8 @@ export default async function AdminReportsPage({
   const totalKlikShopee = commissions.reduce((s, c) => s + Number(c.klik ?? 0), 0);
   const totalSpend = spend.reduce((s, r) => s + Number(r.spend ?? 0), 0);
 
-  // klik_masuk lookup by campaign
-  const klikMasukMap = new Map(klikMasukRows.map((r) => [r.utm_campaign, r.klik_masuk]));
+  // Shopee click lookup by campaign_key
+  const shopeeMap = new Map(shopeeClicks.map((r) => [r.campaign_key, r]));
 
   // Group ad_spend_reports by utm_campaign
   const campaignMap = new Map<string, { spend: number; linkClicks: number }>();
@@ -53,19 +42,24 @@ export default async function AdminReportsPage({
   }
 
   const rows: ReportRow[] = Array.from(campaignMap.entries()).map(([campaign, data]) => {
-    const klikMasuk = klikMasukMap.get(campaign) ?? 0;
+    const shopee = shopeeMap.get(campaign);
+    const klikFB = shopee?.klikFB ?? 0;
+    const klikIG = shopee?.klikIG ?? 0;
+    const klikLainnya = shopee?.klikLainnya ?? 0;
+    const klikMasuk = klikFB + klikIG + klikLainnya;
     const cpcMeta = data.linkClicks > 0 ? data.spend / data.linkClicks : 0;
     const cpcMasuk = klikMasuk > 0 ? data.spend / klikMasuk : 0;
-    return { campaign, spend: data.spend, klikMeta: data.linkClicks, klikMasuk, cpcMeta, cpcMasuk };
+    return { campaign, spend: data.spend, klikMeta: data.linkClicks, klikFB, klikIG, klikLainnya, klikMasuk, cpcMeta, cpcMasuk };
   });
 
   const totalKlikMeta = rows.reduce((s, r) => s + r.klikMeta, 0);
+  const totalKlikMasuk = rows.reduce((s, r) => s + r.klikMasuk, 0);
   const totalProfit = totalKomisi - totalSpend;
 
   return (
     <PageShell
       title="Reports"
-      subtitle="Performa per kampanye berdasarkan data ad spend."
+      subtitle="Performa per kampanye berdasarkan data ad spend & klik Shopee."
     >
       {/* Summary cards */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -88,11 +82,16 @@ export default async function AdminReportsPage({
         ))}
       </div>
 
+      {/* Shopee click import */}
+      <div className="mb-4">
+        <ShopeeCsvImport />
+      </div>
+
       <ReportsTable rows={rows} totalKomisi={totalKomisi} totalSpend={totalSpend} />
 
       <p className="mt-3 text-[11px] text-muted">
         Komisi, Pesanan, Klik Shopee adalah total global dari laporan Shopee — tidak terikat per kampanye.
-        Total Pesanan: {totalPesanan.toLocaleString()}
+        Total Pesanan: {totalPesanan.toLocaleString()} · Total Klik Masuk (Shopee): {totalKlikMasuk.toLocaleString()}
       </p>
     </PageShell>
   );

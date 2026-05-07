@@ -7,7 +7,10 @@ export interface ReportRow {
   campaign: string;
   spend: number;
   klikMeta: number;
-  klikMasuk: number;
+  klikFB: number;
+  klikIG: number;
+  klikLainnya: number;
+  klikMasuk: number; // = klikFB + klikIG + klikLainnya
   cpcMeta: number;
   cpcMasuk: number;
 }
@@ -28,60 +31,6 @@ function efisiensiColor(pct: number): string {
 function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
   if (!active) return <span className="opacity-20">↕</span>;
   return <span className="text-brand-300">{dir === "asc" ? "↑" : "↓"}</span>;
-}
-
-function KlikMasukCell({ campaign, initial }: { campaign: string; initial: number }) {
-  const [value, setValue] = useState(initial);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(initial));
-  const [saving, setSaving] = useState(false);
-
-  async function save() {
-    const n = parseInt(draft, 10);
-    if (isNaN(n) || n < 0) { setDraft(String(value)); setEditing(false); return; }
-    setSaving(true);
-    try {
-      await fetch("/api/reports/klik-masuk", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ utm_campaign: campaign, klik_masuk: n }),
-      });
-      setValue(n);
-    } finally {
-      setSaving(false);
-      setEditing(false);
-    }
-  }
-
-  if (editing) {
-    return (
-      <div className="flex items-center justify-end gap-1">
-        <input
-          autoFocus
-          type="number"
-          min={0}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { setDraft(String(value)); setEditing(false); } }}
-          className="w-24 rounded border border-brand bg-surface px-2 py-0.5 text-right text-sm focus:outline-none"
-        />
-        <button onClick={save} disabled={saving} className="text-xs text-brand-300 hover:underline disabled:opacity-50">
-          {saving ? "…" : "OK"}
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => { setDraft(String(value)); setEditing(true); }}
-      className="group flex w-full items-center justify-end gap-1.5 text-right"
-      title="Klik untuk edit"
-    >
-      <span>{formatNumber(value)}</span>
-      <span className="opacity-0 group-hover:opacity-60 text-[10px] text-muted">✏</span>
-    </button>
-  );
 }
 
 interface Props {
@@ -107,8 +56,13 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
   });
 
   const totalKlikMeta = rows.reduce((s, r) => s + r.klikMeta, 0);
+  const totalKlikFB = rows.reduce((s, r) => s + r.klikFB, 0);
+  const totalKlikIG = rows.reduce((s, r) => s + r.klikIG, 0);
+  const totalKlikLainnya = rows.reduce((s, r) => s + r.klikLainnya, 0);
   const totalKlikMasuk = rows.reduce((s, r) => s + r.klikMasuk, 0);
   const totalProfit = totalKomisi - totalSpend;
+
+  const hasShopeeData = rows.some((r) => r.klikMasuk > 0);
 
   function Th({ k, label, right }: { k: SortKey; label: string; right?: boolean }) {
     return (
@@ -123,15 +77,15 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
 
   return (
     <div className="overflow-x-auto rounded-xl2 border border-border bg-surface-2">
-      <table className="w-full min-w-[780px] text-left text-sm">
+      <table className="w-full min-w-[900px] text-left text-sm">
         <thead className="text-[11px] uppercase tracking-wider text-muted border-b border-border">
-          <tr className="[&>th]:px-3 [&>th]:py-2.5">
+          <tr>
             <Th k="campaign" label="Nama Iklan" />
             <Th k="spend" label="Ad Spend" right />
             <Th k="klikMeta" label="Klik Meta" right />
-            <th className="px-3 py-2.5 text-right whitespace-nowrap text-brand-300/80">
-              Klik Masuk ✏
-            </th>
+            <th className="px-3 py-2.5 text-right whitespace-nowrap text-[#1877F2]/70">Klik FB</th>
+            <th className="px-3 py-2.5 text-right whitespace-nowrap text-[#E1306C]/70">Klik IG</th>
+            <th className="px-3 py-2.5 text-right whitespace-nowrap text-muted">Klik Lainnya</th>
             <Th k="efisiensi" label="Efisiensi" right />
             <Th k="cpcMeta" label="CPC Meta" right />
             <Th k="cpcMasuk" label="CPC Masuk" right />
@@ -140,41 +94,52 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
         <tbody>
           {sorted.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted">
+              <td colSpan={9} className="px-3 py-8 text-center text-sm text-muted">
                 Belum ada data. Upload ad spend report terlebih dahulu.
               </td>
             </tr>
           ) : (
-            sorted.map((row, i) => (
-              <tr key={row.campaign} className="border-b border-border last:border-0 [&>td]:px-3 [&>td]:py-2.5">
-                <td className="max-w-[220px]">
-                  <span className="flex items-center gap-2">
-                    <span className="text-muted text-xs">{i + 1}</span>
-                    <span className="truncate font-medium text-ink" title={row.campaign}>{row.campaign}</span>
-                  </span>
-                </td>
-                <td className="text-right text-ink-2">{formatCurrency(row.spend)}</td>
-                <td className="text-right text-ink-2">{formatNumber(row.klikMeta)}</td>
-                <td className="text-right">
-                  <KlikMasukCell campaign={row.campaign} initial={row.klikMasuk} />
-                </td>
-                <td className="text-right">
-                  {(() => {
-                    const pct = efisiensi(row);
-                    if (pct === null) return <span className="text-muted">—</span>;
-                    return (
+            sorted.map((row, i) => {
+              const pct = efisiensi(row);
+              return (
+                <tr key={row.campaign} className="border-b border-border last:border-0 [&>td]:px-3 [&>td]:py-2.5">
+                  <td className="max-w-[200px]">
+                    <span className="flex items-center gap-2">
+                      <span className="text-muted text-xs">{i + 1}</span>
+                      <span className="truncate font-medium text-ink" title={row.campaign}>{row.campaign}</span>
+                    </span>
+                  </td>
+                  <td className="text-right text-ink-2">{formatCurrency(row.spend)}</td>
+                  <td className="text-right text-ink-2">{formatNumber(row.klikMeta)}</td>
+                  <td className="text-right">
+                    {row.klikFB > 0
+                      ? <span className="text-[#1877F2]">{formatNumber(row.klikFB)}</span>
+                      : <span className="text-muted">—</span>}
+                  </td>
+                  <td className="text-right">
+                    {row.klikIG > 0
+                      ? <span className="text-[#E1306C]">{formatNumber(row.klikIG)}</span>
+                      : <span className="text-muted">—</span>}
+                  </td>
+                  <td className="text-right text-ink-2">
+                    {row.klikLainnya > 0 ? formatNumber(row.klikLainnya) : <span className="text-muted">—</span>}
+                  </td>
+                  <td className="text-right">
+                    {pct === null ? (
+                      <span className="text-muted">—</span>
+                    ) : (
                       <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${efisiensiColor(pct)}`}>
                         {pct.toFixed(1)}%
                       </span>
-                    );
-                  })()}
-                </td>
-                <td className="text-right text-ink-2">{formatCurrency(row.cpcMeta)}</td>
-                <td className="text-right text-ink-2">
-                  {row.klikMasuk > 0 ? formatCurrency(row.cpcMasuk) : <span className="text-muted">—</span>}
-                </td>
-              </tr>
-            ))
+                    )}
+                  </td>
+                  <td className="text-right text-ink-2">{formatCurrency(row.cpcMeta)}</td>
+                  <td className="text-right text-ink-2">
+                    {row.klikMasuk > 0 ? formatCurrency(row.cpcMasuk) : <span className="text-muted">—</span>}
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
         <tfoot className="border-t-2 border-border">
@@ -182,7 +147,9 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
             <td>TOTAL ({rows.length} kampanye)</td>
             <td className="text-right">{formatCurrency(totalSpend)}</td>
             <td className="text-right">{formatNumber(totalKlikMeta)}</td>
-            <td className="text-right">{formatNumber(totalKlikMasuk)}</td>
+            <td className="text-right text-[#1877F2]">{totalKlikFB > 0 ? formatNumber(totalKlikFB) : "—"}</td>
+            <td className="text-right text-[#E1306C]">{totalKlikIG > 0 ? formatNumber(totalKlikIG) : "—"}</td>
+            <td className="text-right">{totalKlikLainnya > 0 ? formatNumber(totalKlikLainnya) : "—"}</td>
             <td className="text-right">
               {totalKlikMeta > 0 && totalKlikMasuk > 0
                 ? `${((totalKlikMasuk / totalKlikMeta) * 100).toFixed(1)}%`
@@ -193,6 +160,12 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
           </tr>
         </tfoot>
       </table>
+
+      {!hasShopeeData && rows.length > 0 && (
+        <div className="border-t border-border px-4 py-2 text-xs text-muted">
+          Belum ada data klik Shopee. Upload laporan klik di atas untuk mengisi kolom Klik FB / IG / Lainnya.
+        </div>
+      )}
 
       {/* Global summary */}
       <div className="border-t border-border px-4 py-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted">
