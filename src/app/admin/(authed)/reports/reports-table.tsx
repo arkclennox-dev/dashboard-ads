@@ -86,6 +86,7 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
             <th className="px-3 py-2.5 text-right whitespace-nowrap text-[#1877F2]/70">Klik FB</th>
             <th className="px-3 py-2.5 text-right whitespace-nowrap text-[#E1306C]/70">Klik IG</th>
             <th className="px-3 py-2.5 text-right whitespace-nowrap text-muted">Klik Lainnya</th>
+            <Th k="klikMasuk" label="Klik Masuk" right />
             <Th k="efisiensi" label="Efisiensi" right />
             <Th k="cpcMeta" label="CPC Meta" right />
             <Th k="cpcMasuk" label="CPC Masuk" right />
@@ -94,7 +95,7 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
         <tbody>
           {sorted.length === 0 ? (
             <tr>
-              <td colSpan={9} className="px-3 py-8 text-center text-sm text-muted">
+              <td colSpan={10} className="px-3 py-8 text-center text-sm text-muted">
                 Belum ada data. Upload ad spend report terlebih dahulu.
               </td>
             </tr>
@@ -124,6 +125,9 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
                   <td className="text-right text-ink-2">
                     {row.klikLainnya > 0 ? formatNumber(row.klikLainnya) : <span className="text-muted">—</span>}
                   </td>
+                  <td className="text-right font-medium text-ink">
+                    {row.klikMasuk > 0 ? formatNumber(row.klikMasuk) : <span className="text-muted">—</span>}
+                  </td>
                   <td className="text-right">
                     {pct === null ? (
                       <span className="text-muted">—</span>
@@ -150,6 +154,7 @@ export function ReportsTable({ rows, totalKomisi, totalSpend }: Props) {
             <td className="text-right text-[#1877F2]">{totalKlikFB > 0 ? formatNumber(totalKlikFB) : "—"}</td>
             <td className="text-right text-[#E1306C]">{totalKlikIG > 0 ? formatNumber(totalKlikIG) : "—"}</td>
             <td className="text-right">{totalKlikLainnya > 0 ? formatNumber(totalKlikLainnya) : "—"}</td>
+            <td className="text-right">{totalKlikMasuk > 0 ? formatNumber(totalKlikMasuk) : "—"}</td>
             <td className="text-right">
               {totalKlikMeta > 0 && totalKlikMasuk > 0
                 ? `${((totalKlikMasuk / totalKlikMeta) * 100).toFixed(1)}%`
