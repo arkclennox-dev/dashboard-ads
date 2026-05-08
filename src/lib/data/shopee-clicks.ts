@@ -35,17 +35,22 @@ export async function upsertShopeeClicks(
   return { ok: rows.length };
 }
 
-export async function getShopeeClickSummaries(): Promise<ShopeeClickSummary[]> {
+export async function getShopeeClickSummaries(args?: { from?: string; to?: string }): Promise<ShopeeClickSummary[]> {
   const tenantId = await getTenantId();
   if (!tenantId) return [];
 
   const sb = getSupabaseServiceRole();
   if (!sb) return [];
 
-  const { data } = await sb
+  let query = sb
     .from("shopee_click_reports")
     .select("campaign_key, perujuk, klik_count")
     .eq("tenant_id", tenantId);
+
+  if (args?.from) query = query.gte("report_date", args.from);
+  if (args?.to) query = query.lte("report_date", args.to);
+
+  const { data } = await query;
 
   if (!data) return [];
 

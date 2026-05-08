@@ -5,20 +5,29 @@ import { getShopeeClickSummaries } from "@/lib/data/shopee-clicks";
 import { formatCurrency } from "@/lib/format";
 import { ReportsTable, type ReportRow } from "./reports-table";
 import { ShopeeCsvImport } from "./shopee-csv-import";
+import { ReportsDateFilter } from "./reports-date-filter";
 
 export const dynamic = "force-dynamic";
+
+function isoOffset(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export default async function AdminReportsPage({
   searchParams,
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const { from, to } = searchParams;
+  const today = new Date().toISOString().slice(0, 10);
+  const from = searchParams.from ?? isoOffset(-29);
+  const to = searchParams.to ?? today;
 
   const [{ items: spend }, { items: commissions }, shopeeClicks] = await Promise.all([
     listAdSpend({ page: 1, pageSize: 10000, from, to }),
     listCommissions({ page: 1, pageSize: 10000, from, to }),
-    getShopeeClickSummaries(),
+    getShopeeClickSummaries({ from, to }),
   ]);
 
   // Global totals
@@ -61,6 +70,11 @@ export default async function AdminReportsPage({
       title="Reports"
       subtitle="Performa per kampanye berdasarkan data ad spend & klik Shopee."
     >
+      {/* Date filter */}
+      <div className="mb-5">
+        <ReportsDateFilter from={from} to={to} />
+      </div>
+
       {/* Summary cards */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
