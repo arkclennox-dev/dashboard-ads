@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useRef } from "react";
 import type { CheckoutSection as CheckoutSectionType, PageSettings } from "@/lib/types/sections";
 
 interface Area { id: string; name: string; administrative_division_level_1_name: string; administrative_division_level_2_name: string; administrative_division_level_3_name: string; postal_code: number; }
@@ -22,22 +22,25 @@ export function CheckoutSection({ s, settings }: Props) {
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingRates, setLoadingRates] = useState(false);
   const [areaOpen, setAreaOpen] = useState(false);
-
-  const searchTimer = { current: null as ReturnType<typeof setTimeout> | null };
+  const [biteshipError, setBiteshipError] = useState<string | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleAreaSearch(v: string) {
     setAreaSearch(v);
     setSelectedArea(null);
     setRates([]);
     setSelectedRate(null);
+    setBiteshipError(null);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (v.length < 3) { setAreas([]); return; }
     searchTimer.current = setTimeout(async () => {
       setLoadingAreas(true);
-      const res = await fetch(`/api/biteship/areas?q=${encodeURIComponent(v)}`);
-      const json = await res.json();
-      setAreas(json.data ?? []);
-      setAreaOpen(true);
+      try {
+        const res = await fetch(`/api/biteship/areas?q=${encodeURIComponent(v)}`);
+        const json = await res.json();
+        if (!res.ok) { setBiteshipError(json.error?.message ?? "Gagal mencari area"); setAreas([]); }
+        else { setAreas(json.data ?? []); setAreaOpen(true); }
+      } catch { setBiteshipError("Tidak bisa terhubung ke layanan ongkir"); }
       setLoadingAreas(false);
     }, 400);
   }
@@ -47,15 +50,19 @@ export function CheckoutSection({ s, settings }: Props) {
     setAreaSearch(`${area.administrative_division_level_3_name}, ${area.administrative_division_level_2_name}, ${area.administrative_division_level_1_name}`);
     setAreas([]);
     setAreaOpen(false);
-    if (!s.origin_area_id) return;
+    setBiteshipError(null);
+    if (!s.origin_area_id) { setBiteshipError("Lokasi asal penjual belum dikonfigurasi."); return; }
     setLoadingRates(true);
-    const res = await fetch("/api/biteship/rates", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ origin_area_id: s.origin_area_id, destination_area_id: area.id, weight_gram: s.weight_gram || 500, item_value: s.price || 0 }),
-    });
-    const json = await res.json();
-    setRates(json.data ?? []);
+    try {
+      const res = await fetch("/api/biteship/rates", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ origin_area_id: s.origin_area_id, destination_area_id: area.id, weight_gram: s.weight_gram || 500, item_value: s.price || 0 }),
+      });
+      const json = await res.json();
+      if (!res.ok) setBiteshipError(json.error?.message ?? "Gagal mengambil ongkos kirim");
+      else setRates(json.data ?? []);
+    } catch { setBiteshipError("Tidak bisa terhubung ke layanan ongkir"); }
     setLoadingRates(false);
   }
 
@@ -125,6 +132,11 @@ export function CheckoutSection({ s, settings }: Props) {
             )}
           </div>
 
+          {biteshipError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
+              ⚠️ {biteshipError}
+            </div>
+          )}
           {loadingRates && <div className="text-center text-sm text-gray-400 py-4">Mengecek ongkos kirim...</div>}
 
           {rates.length > 0 && (

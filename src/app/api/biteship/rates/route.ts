@@ -15,6 +15,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   const parsed = await parseJson(request, schema);
   if (!parsed.ok) return parsed.response;
-  const rates = await getRates(parsed.data);
+  const { rates, error } = await getRates(parsed.data);
+  if (error) return errors.server(error);
   return ok(rates);
 }
