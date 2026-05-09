@@ -2,8 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ── Dark theme (default) ── */
+.dark {
   color-scheme: dark;
+  --canvas:        5 7 13;
+  --surface:       11 15 26;
+  --surface-2:     15 20 34;
+  --surface-3:     20 26 43;
+  --border-col:    31 39 64;
+  --border-strong: 42 53 80;
+  --muted:         138 147 168;
+  --muted-2:       93 102 125;
+  --ink:           231 236 245;
+  --ink-2:         196 202 217;
+}
+
+/* ── Light theme ── */
+.light {
+  color-scheme: light;
+  --canvas:        240 242 248;
+  --surface:       255 255 255;
+  --surface-2:     244 246 251;
+  --surface-3:     234 236 244;
+  --border-col:    221 226 237;
+  --border-strong: 200 206 223;
+  --muted:         100 116 139;
+  --muted-2:       148 163 184;
+  --ink:           15 23 42;
+  --ink-2:         51 65 85;
 }
 
 html,
@@ -12,22 +38,31 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 0% -20%, rgba(37, 99, 235, 0.06), transparent 60%),
-    radial-gradient(900px 500px at 110% -10%, rgba(37, 99, 235, 0.04), transparent 60%),
-    #05070d;
-  color: theme("colors.ink");
+  color: rgb(var(--ink));
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
 }
 
-/* Custom scrollbars in surfaces */
+.dark body {
+  background:
+    radial-gradient(1200px 600px at 0% -20%, rgba(37, 99, 235, 0.06), transparent 60%),
+    radial-gradient(900px 500px at 110% -10%, rgba(37, 99, 235, 0.04), transparent 60%),
+    rgb(5 7 13);
+}
+
+.light body {
+  background:
+    radial-gradient(1200px 600px at 0% -20%, rgba(37, 99, 235, 0.03), transparent 60%),
+    rgb(240 242 248);
+}
+
+/* Custom scrollbars */
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #1f2740;
+  background: rgb(var(--border-col));
   border-radius: 8px;
 }
 *::-webkit-scrollbar-track {
@@ -41,7 +76,7 @@ body {
 
 /* Focus ring */
 :where(button, a, input, select, textarea):focus-visible {
-  outline: 2px solid theme("colors.brand.DEFAULT");
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -62,7 +97,7 @@ body {
 .toggle .track {
   position: absolute;
   inset: 0;
-  background: #243049;
+  background: rgb(var(--border-col));
   border-radius: 999px;
   transition: background 0.15s ease;
 }
@@ -73,11 +108,11 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: #e7ecf5;
+  background: rgb(var(--ink));
   transition: transform 0.15s ease;
 }
 .toggle input:checked + .track {
-  background: theme("colors.brand.DEFAULT");
+  background: #2563eb;
 }
 .toggle input:checked + .track + .thumb {
   transform: translateX(16px);

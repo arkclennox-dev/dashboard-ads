@@ -2,19 +2,20 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: ["./src/**/*.{ts,tsx,js,jsx,mdx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        canvas: "#05070d",
-        surface: "#0b0f1a",
-        "surface-2": "#0f1422",
-        "surface-3": "#141a2b",
-        border: "#1f2740",
-        "border-strong": "#2a3550",
-        muted: "#8a93a8",
-        "muted-2": "#5d667d",
-        ink: "#e7ecf5",
-        "ink-2": "#c4cad9",
+        canvas: "rgb(var(--canvas) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        "surface-2": "rgb(var(--surface-2) / <alpha-value>)",
+        "surface-3": "rgb(var(--surface-3) / <alpha-value>)",
+        border: "rgb(var(--border-col) / <alpha-value>)",
+        "border-strong": "rgb(var(--border-strong) / <alpha-value>)",
+        muted: "rgb(var(--muted) / <alpha-value>)",
+        "muted-2": "rgb(var(--muted-2) / <alpha-value>)",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        "ink-2": "rgb(var(--ink-2) / <alpha-value>)",
         brand: {
           DEFAULT: "#2563eb",
           600: "#1d4ed8",

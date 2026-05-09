@@ -14,8 +14,10 @@ import {
   IconLock,
   IconLogo,
   IconMegaphone,
+  IconMoon,
   IconPlug,
   IconSettings,
+  IconSun,
   IconTag,
 } from "./icons";
 
@@ -86,6 +88,26 @@ function NavLink({ item, isAdmin }: { item: NavItem; isAdmin: boolean }) {
   );
 }
 
+function useTheme() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme") as "dark" | "light" | null;
+    if (stored) setTheme(stored);
+    else setTheme(document.documentElement.classList.contains("light") ? "light" : "dark");
+  }, []);
+
+  function toggle() {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.classList.remove("dark", "light");
+    document.documentElement.classList.add(next);
+    localStorage.setItem("theme", next);
+    setTheme(next);
+  }
+
+  return { theme, toggle };
+}
+
 function useCurrentUser() {
   const [email, setEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -115,6 +137,7 @@ function useCurrentUser() {
 
 export function Sidebar() {
   const { initials, displayName, isAdmin } = useCurrentUser();
+  const { theme, toggle } = useTheme();
 
   const visibleTertiary = tertiary.filter(
     (item) => !(item.hidden && item.adminOnly && !isAdmin)
@@ -158,6 +181,13 @@ export function Sidebar() {
             <div className="truncate text-sm font-semibold">{displayName}</div>
             <div className="text-xs text-muted">{isAdmin ? "Admin" : "Member"}</div>
           </div>
+          <button
+            onClick={toggle}
+            title={theme === "dark" ? "Mode Terang" : "Mode Gelap"}
+            className="shrink-0 rounded-lg p-1.5 text-muted hover:bg-surface-3 hover:text-ink transition"
+          >
+            {theme === "dark" ? <IconSun width={16} height={16} /> : <IconMoon width={16} height={16} />}
+          </button>
         </div>
         <a
           href="/api/auth/signout"

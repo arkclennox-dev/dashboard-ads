@@ -19,7 +19,10 @@ export default async function RootLayout({
   const ga4Id = settings?.ga4_measurement_id?.trim() || null;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('theme')||'dark';document.documentElement.classList.add(t);}catch(e){}})()` }} />
+      </head>
       <body className="min-h-screen font-sans">
         {children}
 
