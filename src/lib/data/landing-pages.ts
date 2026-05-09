@@ -119,6 +119,36 @@ export async function getLandingPageBySlug(slug: string): Promise<LandingPageWit
   };
 }
 
+export async function getLandingPageById(id: string): Promise<LandingPage | null> {
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) return null;
+  const { data } = await supabase.from("landing_pages").select("*").eq("id", id).maybeSingle();
+  return (data as LandingPage | null) ?? null;
+}
+
+export interface UpdateLandingPageArgs {
+  title?: string;
+  slug?: string;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  sections?: import("@/lib/types/sections").LandingPageSection[];
+  page_settings?: import("@/lib/types/sections").PageSettings;
+  status?: LandingPageStatus;
+}
+
+export async function updateLandingPage(id: string, args: UpdateLandingPageArgs): Promise<LandingPage | null> {
+  const supabase = getSupabaseServiceRole();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("landing_pages")
+    .update({ ...args, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  return (data as LandingPage | null) ?? null;
+}
+
 export interface CreateLandingPageArgs {
   title: string;
   slug: string;
@@ -160,6 +190,8 @@ export async function createLandingPage(args: CreateLandingPageArgs): Promise<La
       status: args.status ?? "draft",
       custom_head_script: args.custom_head_script ?? null,
       custom_body_script: args.custom_body_script ?? null,
+      sections: [],
+      page_settings: {} as import("@/lib/types/sections").PageSettings,
       created_at: now,
       updated_at: now,
     };

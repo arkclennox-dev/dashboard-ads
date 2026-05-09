@@ -82,15 +82,20 @@ export default async function LandingPagesPage() {
                     <td>
                       <a
                         className="rounded bg-surface px-2 py-1 text-xs text-brand-300 hover:underline"
-                        href={`/rekomendasi/${p.slug}`}
+                        href={`/lp/${p.slug}`}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        /rekomendasi/{p.slug}
+                        /lp/{p.slug}
                       </a>
                     </td>
                     <td className="text-right">
-                      <LandingPageRowActions id={p.id} title={p.title} status={p.status} />
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/landing-pages/${p.id}/edit`} className="rounded border border-border bg-surface px-2 py-1 text-xs text-ink-2 hover:bg-surface-3">
+                          Edit Builder
+                        </Link>
+                        <LandingPageRowActions id={p.id} title={p.title} status={p.status} />
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -65,14 +65,15 @@ export function LandingPageForm({ products }: { products: ProductOption[] }) {
         body: JSON.stringify(body),
       });
       const json = (await res.json()) as
-        | { success: true }
+        | { success: true; data: { id: string } }
         | { success: false; error: { message: string } };
       if (!res.ok || !json.success) {
         const text =
           "error" in json && json.error?.message ? json.error.message : `HTTP ${res.status}`;
         throw new Error(text);
       }
-      router.push("/landing-pages");
+      const id = "data" in json ? json.data?.id : null;
+      router.push(id ? `/landing-pages/${id}/edit` : "/landing-pages");
       router.refresh();
     } catch (err) {
       setError((err as Error).message);

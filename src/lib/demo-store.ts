@@ -163,6 +163,8 @@ function seed(): Store {
     status: "published",
     custom_head_script: null,
     custom_body_script: null,
+    sections: [],
+    page_settings: {} as import("@/lib/types/sections").PageSettings,
     created_at: now,
     updated_at: now,
   };

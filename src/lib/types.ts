@@ -30,6 +30,8 @@ export interface LandingPage {
   status: LandingPageStatus;
   custom_head_script: string | null;
   custom_body_script: string | null;
+  sections: import("./types/sections").LandingPageSection[];
+  page_settings: import("./types/sections").PageSettings;
   created_at: string;
   updated_at: string;
 }
