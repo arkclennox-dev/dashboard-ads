@@ -15,14 +15,22 @@ interface ParsedRow {
 }
 
 // Flexible column name mapping (lowercase, trimmed)
-const COL_DATE = ["day", "date", "tanggal", "reporting starts", "report_date"];
+// Supports both English (Meta Ads Manager) and Indonesian (Meta Ads Manager ID) exports
+const COL_DATE = ["day", "date", "tanggal", "reporting starts", "report_date", "awal pelaporan"];
 const COL_CAMPAIGN = ["campaign name", "campaign_name", "campaign", "nama kampanye"];
 const COL_ADSET = ["ad set name", "adset_name", "adset name", "ad set", "nama ad set"];
 const COL_AD = ["ad name", "ad_name", "ad", "nama iklan"];
-const COL_SPEND = ["amount spent", "spend", "biaya", "amount spent (idr)", "amount spent (usd)"];
-const COL_IMPRESSIONS = ["impressions", "impr.", "impr"];
+const COL_SPEND = [
+  "amount spent", "spend", "biaya",
+  "amount spent (idr)", "amount spent (usd)",
+  "jumlah yang dibelanjakan (idr)", "jumlah yang dibelanjakan (usd)", "jumlah yang dibelanjakan",
+];
+const COL_IMPRESSIONS = ["impressions", "impr.", "impr", "impresi"];
 const COL_LINK_CLICKS = ["link clicks", "link_clicks", "clicks"];
 const COL_LPV = ["landing page views", "landing_page_views", "lpv"];
+// Indonesian export: "Hasil" = results (link clicks when "Indikator Hasil" = actions:link_click)
+const COL_HASIL = ["hasil"];
+const COL_INDIKATOR = ["indikator hasil", "result indicator"];
 
 function findCol(headers: string[], candidates: string[]): number {
   return headers.findIndex((h) => candidates.includes(h.toLowerCase().trim()));
@@ -83,10 +91,15 @@ async function parseFile(file: File): Promise<ParsedRow[]> {
   const iImpr = findCol(headers, COL_IMPRESSIONS);
   const iLC = findCol(headers, COL_LINK_CLICKS);
   const iLPV = findCol(headers, COL_LPV);
+  // Indonesian export: "Hasil" = generic results; "Indikator Hasil" tells us which metric
+  const iHasil = findCol(headers, COL_HASIL);
+  const iIndikator = findCol(headers, COL_INDIKATOR);
 
   if (iDate < 0 || iCamp < 0) {
+    const found = headers.map((h) => `"${h.trim()}"`).join(", ");
     throw new Error(
-      `Kolom wajib tidak ditemukan. Pastikan ada kolom "Day"/"Tanggal" dan "Campaign Name"/"Campaign".`,
+      `Kolom wajib tidak ditemukan. Kolom terdeteksi: ${found}. ` +
+      `Pastikan ada kolom tanggal ("Awal pelaporan"/"Day") dan kampanye ("Nama kampanye"/"Campaign Name").`,
     );
   }
 
@@ -97,11 +110,23 @@ async function parseFile(file: File): Promise<ParsedRow[]> {
     const campVal = r[iCamp]?.trim();
     if (!dateVal || !campVal) continue;
 
-    // Normalize date — Meta exports as YYYY-MM-DD or MM/DD/YYYY
+    // Normalize date — supports YYYY-MM-DD and MM/DD/YYYY
     let reportDate = dateVal;
     if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateVal)) {
       const [m, d, y] = dateVal.split("/");
       reportDate = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+
+    // Resolve link clicks: prefer explicit column, fall back to "Hasil" when
+    // "Indikator Hasil" confirms it measures link clicks
+    let linkClicks = iLC >= 0 ? Number(r[iLC]?.replace(/,/g, "") ?? "0") || 0 : 0;
+    if (linkClicks === 0 && iHasil >= 0) {
+      const isLinkClick =
+        iIndikator < 0 ||
+        (r[iIndikator]?.toLowerCase().includes("link_click") ?? false);
+      if (isLinkClick) {
+        linkClicks = Number(r[iHasil]?.replace(/,/g, "") ?? "0") || 0;
+      }
     }
 
     results.push({
@@ -111,7 +136,7 @@ async function parseFile(file: File): Promise<ParsedRow[]> {
       ad_name: iAd >= 0 ? r[iAd]?.trim() ?? "" : "",
       spend: iSpend >= 0 ? parseAmount(r[iSpend] ?? "0") : 0,
       impressions: iImpr >= 0 ? Number(r[iImpr]?.replace(/,/g, "") ?? "0") || 0 : 0,
-      link_clicks: iLC >= 0 ? Number(r[iLC]?.replace(/,/g, "") ?? "0") || 0 : 0,
+      link_clicks: linkClicks,
       landing_page_views: iLPV >= 0 ? Number(r[iLPV]?.replace(/,/g, "") ?? "0") || 0 : 0,
     });
   }
