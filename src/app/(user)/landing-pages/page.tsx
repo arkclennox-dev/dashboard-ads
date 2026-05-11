@@ -4,6 +4,7 @@ import { listLandingPages } from "@/lib/data/landing-pages";
 import { getLandingPageVisits } from "@/lib/data/clicks";
 import { formatDate, formatNumber } from "@/lib/format";
 import { LandingPageRowActions } from "./row-actions";
+import { NewLandingPageButton } from "./new-page-button";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,7 @@ export default async function LandingPagesPage() {
     <PageShell
       title="Landing pages"
       subtitle="Public pages at /rekomendasi/[slug] that group affiliate products."
-      actions={
-        <Link
-          href="/landing-pages/new"
-          className="rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-        >
-          + New landing page
-        </Link>
-      }
+      actions={<NewLandingPageButton />}
     >
       <div className="rounded-xl2 border border-border bg-surface-2">
         <div className="flex items-center gap-3 px-4 py-3">

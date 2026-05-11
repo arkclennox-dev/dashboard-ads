@@ -97,6 +97,8 @@ export interface PageSettings {
   sticky_cta_type: "whatsapp" | "link" | "scroll";
   sticky_cta_value: string;
   whatsapp_number: string;
+  page_mode?: "sections" | "html";
+  custom_html?: string;
 }
 
 export const defaultPageSettings: PageSettings = {

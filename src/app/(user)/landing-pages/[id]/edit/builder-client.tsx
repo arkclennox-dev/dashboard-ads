@@ -259,6 +259,8 @@ export function BuilderClient({ id, title, slug, status: initialStatus, initialS
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [pageMode, setPageMode] = useState<"sections" | "html">(initialSettings.page_mode ?? "sections");
+  const [customHtml, setCustomHtml] = useState(initialSettings.custom_html ?? "");
 
   const selected = sections.find(s => s.id === selectedId) ?? null;
 
@@ -283,7 +285,11 @@ export function BuilderClient({ id, title, slug, status: initialStatus, initialS
     await fetch(`/api/landing-pages/${id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sections, page_settings: settings, status }),
+      body: JSON.stringify({
+        sections,
+        page_settings: { ...settings, page_mode: pageMode, custom_html: customHtml },
+        status,
+      }),
     });
     setSaving(false);
     setSaved(true);
@@ -299,6 +305,15 @@ export function BuilderClient({ id, title, slug, status: initialStatus, initialS
         <span className="text-sm font-semibold truncate max-w-[200px]">{title}</span>
         <span className="text-xs text-muted">/lp/{slug}</span>
         <div className="ml-auto flex items-center gap-2">
+          {/* Mode toggle */}
+          <div className="flex rounded-lg border border-border bg-surface-3 p-0.5 text-xs">
+            {(["sections", "html"] as const).map(m => (
+              <button key={m} type="button" onClick={() => setPageMode(m)}
+                className={`rounded-md px-3 py-1 font-medium transition ${pageMode === m ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"}`}>
+                {m === "sections" ? "Sections" : "HTML"}
+              </button>
+            ))}
+          </div>
           <select value={status} onChange={e => setStatus(e.target.value)}
             className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-ink focus:outline-none">
             <option value="draft">Draft</option>
@@ -393,21 +408,37 @@ export function BuilderClient({ id, title, slug, status: initialStatus, initialS
           )}
         </div>
 
-        {/* Right panel: section editor */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {selected ? (
-            <div>
-              <h2 className="mb-4 text-base font-semibold text-ink">{SECTION_LABELS[selected.type]}</h2>
-              <div className="max-w-2xl">
-                <SectionForm section={selected} onChange={updateSection} />
+        {/* Right panel: section editor or HTML editor */}
+        {pageMode === "html" ? (
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex items-center gap-3 border-b border-border bg-surface-3 px-4 py-2 shrink-0">
+              <span className="text-xs font-medium text-ink-2">Mode HTML — paste raw HTML dari landing page lain</span>
+              <span className="ml-auto text-[10px] text-muted">Halaman akan merender HTML ini langsung saat di-Publish</span>
+            </div>
+            <textarea
+              className="flex-1 resize-none bg-canvas p-4 font-mono text-xs text-ink focus:outline-none"
+              placeholder="<!DOCTYPE html>&#10;<html>&#10;  ...&#10;</html>"
+              value={customHtml}
+              onChange={e => setCustomHtml(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6">
+            {selected ? (
+              <div>
+                <h2 className="mb-4 text-base font-semibold text-ink">{SECTION_LABELS[selected.type]}</h2>
+                <div className="max-w-2xl">
+                  <SectionForm section={selected} onChange={updateSection} />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted text-sm">
-              Pilih section di sebelah kiri untuk mulai mengedit.
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted text-sm">
+                Pilih section di sebelah kiri untuk mulai mengedit.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

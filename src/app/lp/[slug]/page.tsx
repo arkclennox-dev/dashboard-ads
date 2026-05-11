@@ -23,6 +23,11 @@ export default async function LpPage({ params }: Props) {
   if (!page || page.status !== "published") notFound();
 
   const settings = { ...defaultPageSettings, ...(page.page_settings ?? {}) };
+
+  if (settings.page_mode === "html" && settings.custom_html) {
+    return <div dangerouslySetInnerHTML={{ __html: settings.custom_html }} />;
+  }
+
   const sections = (page.sections ?? []) as Parameters<typeof LpSections>[0]["sections"];
 
   return (
